@@ -1,5 +1,9 @@
-import WebSocket, { WebSocketServer, type Server } from "ws";
+import WebSocket, { WebSocketServer } from "ws";
 import express from "express";
+import { Kafka, type Consumer } from "kafkajs";
+import {config} from "dotenv";
+
+config()
 
 interface client {
   socket: WebSocket;
@@ -11,12 +15,28 @@ class web_socket_server {
   private app = express();
   private WSS;
   private count: number = 0;
+  private consumer: Consumer | undefined;
 
   constructor(port: number) {
     const server = this.app.listen(port, () => {
       console.log(`server start at ${port}`);
     });
     this.WSS = new WebSocketServer({ server: server });
+  }
+
+  //   init kafka
+  private async init_kafka(group_id: string) {
+    if (this.consumer) return this.consumer;
+
+    const kafka_init = new Kafka({
+      clientId: process.env.KAFKA_CLIENT_ID!,
+      brokers: [process.env.KAFKA_BROKER!],
+    });
+    this.consumer  =  kafka_init.consumer({groupId:group_id})
+    await this.consumer.connect()
+    await this.consumer.subscribe({topic:process.env.KAFKA_TOPIC ! ,fromBeginning: true})
+
+    return this.consumer;
   }
 
   public start() {
@@ -30,14 +50,14 @@ class web_socket_server {
               id: this.count,
               socket: ws,
             });
-            console.log("user join",this.count);
+            console.log("user join", this.count);
             break;
           case "message":
-            this.clients.forEach((client)=>{
-                console.log(message);
-                client.socket.send(JSON.stringify(message))
-            })
-            break
+            this.clients.forEach((client) => {
+              console.log(message);
+              client.socket.send(JSON.stringify(message));
+            });
+            break;
           default:
             break;
         }
