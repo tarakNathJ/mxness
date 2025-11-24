@@ -1,13 +1,14 @@
 import  type {Request, Response, NextFunction } from "express"
 
  
-export  type async_handler = (req: Request, res: Response, next: NextFunction) => Promise<responce_type>
+export  type async_handler = (req: Request, res: Response, next: NextFunction) => Promise<type_for_responce>
 
 
-export type responce_type = {
-    success: boolean,
-    message: string,
-    data ?: any,
-    error ?: any
-    status ?: number
-}
+export type type_for_responce = {
+  statuscode: number;
+  data: object | null;
+  message: string;
+  success?: boolean;
+  error?: Error | [];
+  stack ?: string | null
+};
