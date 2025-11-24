@@ -22,6 +22,18 @@ class web_socket_server {
       console.log(`server start at ${port}`);
     });
     this.WSS = new WebSocketServer({ server: server });
+    this.init_consumer();
+  }
+
+  private async init_consumer(){
+    const get_consumer=  await this.init_kafka("test");
+    get_consumer.run({
+      eachMessage: async ({ topic, partition, message }) => {
+        console.log({
+          value: message.value?.toString(),
+        });
+      }
+    })
   }
 
   //   init kafka

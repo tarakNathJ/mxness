@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { createChart, ColorType, IChartApi, ISeriesApi, UTCTimestamp } from 'lightweight-charts';
+import { createChart, ColorType, type IChartApi, type ISeriesApi, type UTCTimestamp } from 'lightweight-charts';
 import { useTheme } from './ThemeProvider';
 
 interface CandleData {
@@ -29,7 +29,7 @@ export function TradingViewChart({ data, height = 500 }: TradingViewChartProps) 
     const isDark = theme === 'dark';
 
     // Create chart
-    const chart: IChartApi = createChart(chartContainerRef.current, {
+    const chart: IChartApi = createChart(chartContainerRef.current!, {
       layout: {
         background: { type: ColorType.Solid, color: isDark ? '#1e293b' : '#ffffff' },
         textColor: isDark ? '#94a3b8' : '#64748b',
@@ -61,9 +61,14 @@ export function TradingViewChart({ data, height = 500 }: TradingViewChartProps) 
           style: 3,
         },
       },
+      
     });
 
-    chartRef.current = chart;
+    if (!chart) {
+      console.error("Failed to create chart instance.");
+      return;
+    }
+   chartRef.current = chart;
 
     // Add candlestick series
     const candlestickSeries = chart.addCandlestickSeries({
@@ -78,20 +83,19 @@ export function TradingViewChart({ data, height = 500 }: TradingViewChartProps) 
     candlestickSeriesRef.current = candlestickSeries;
 
     // Add volume series
-    const volumeSeries = chart.addHistogramSeries({
-      color: '#26a69a',
+    const volumeSeries = chart.addHistogramSeries!({
       priceFormat: {
         type: 'volume',
       },
-      priceScaleId: {
-        scaleMargins: {
-          top: 0.8,
-          bottom: 0,
-        },
-        // priceScaleId: '', // This property is not needed for volume series
-      },
+      priceScaleId: '', // set as an overlay by setting a blank priceScaleId
     });
 
+    volumeSeries.priceScale().applyOptions({
+      scaleMargins: {
+        top: 0.8, // 80% away from the top
+        bottom: 0,
+      },
+    });
     volumeSeriesRef.current = volumeSeries;
 
     // Handle resize
@@ -123,7 +127,7 @@ export function TradingViewChart({ data, height = 500 }: TradingViewChartProps) 
     const volumeDataFormatted = data.map(d => ({
       time: (new Date(d.time).getTime() / 1000) as UTCTimestamp,
       value: d.volume,
-      color: d.close >= d.open ? '#10b98166' : '#ef444466',
+      color: d.close >= d.open ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)',
     }));
 
     candlestickSeriesRef.current.setData(candleDataFormatted);

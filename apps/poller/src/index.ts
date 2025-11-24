@@ -1,5 +1,8 @@
 import WebSocket from "ws";
 import { Kafka, type Producer } from "kafkajs";
+import { config } from "dotenv";
+config();
+
 
 class polling_binance_data {
   private binance_stream_url: string =
