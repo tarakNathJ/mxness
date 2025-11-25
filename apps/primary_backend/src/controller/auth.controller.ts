@@ -244,7 +244,7 @@ export const add_balance = async_handler(async (req, res) => {
 });
 
 // purchase new simple tread
-export const purchase_new_simple_trade = async_handler(async (req, res) => {
+export const purchase_new_trade = async_handler(async (req, res) => {
   const { symbol, quantity } = req.body;
   // @ts-ignore
   const user_id = req.user.id;
