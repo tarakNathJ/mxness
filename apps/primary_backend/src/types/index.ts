@@ -1,7 +1,7 @@
 import  type {Request, Response, NextFunction } from "express"
 
  
-export  type async_handler = (req: Request, res: Response, next: NextFunction) => Promise<type_for_responce>
+export  type async_handler = (req: Request, res: Response, next: NextFunction) => Promise<type_for_responce | any>
 
 
 export type type_for_responce = {
