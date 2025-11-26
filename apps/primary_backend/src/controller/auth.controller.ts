@@ -7,6 +7,7 @@ import {
   eq,
   account_balance,
   tread,
+  desc
 } from "@database/main/dist/index.js";
 import type { Request, Response } from "express";
 import bcrypt from "bcrypt";
@@ -425,3 +426,62 @@ export const sell_existing_trade = async_handler(async (req, res) => {
   if (!result) throw new api_error(400, "database insert failed");
   return new api_responce(201, "sell existing tread", result).send(res);
 });
+
+
+export const get_user_balance = async_handler(async (req, res) => {
+  // @ts-ignore
+  const user_id = req.user.id;
+
+  const [user_are_exist] = await db
+    .select()
+    .from(user)
+    .where(eq(user.id, user_id));
+
+  if (
+    !user_are_exist ||
+    user_are_exist === undefined ||
+    user_are_exist === null
+  ){
+    throw new api_error(400, "user not found");
+  }
+  const [user_balance] = await db
+    .select()
+    .from(account_balance)
+    .where(eq(account_balance.user_id, user_id));
+
+  if (!user_balance) {
+    throw new api_error(400, "balance not found");
+  }
+
+  return new api_responce(200, "user balance", user_balance).send(res);
+
+})
+
+
+export const get_user_all_tread = async_handler(async (req, res) => {
+  // @ts-ignore
+  const user_id = req.user.id;
+  const [user_are_exist] = await db
+    .select()
+    .from(user)
+    .where(eq(user.id, user_id));
+
+  if(
+    !user_are_exist ||
+    user_are_exist === undefined ||
+    user_are_exist === null
+  ){
+  throw new api_error(400, "user not found")
+  }
+
+  const [user_treads] = await db
+    .select()
+    .from(tread)
+    .where(eq(tread.user_id, user_id))
+    .orderBy(desc(tread.id))
+
+  if(!user_treads || user_treads === undefined || user_treads === null){
+    throw new api_error(400, "tread not found")
+  }
+  return new api_responce(200, "user treads", user_treads).send(res);
+})
