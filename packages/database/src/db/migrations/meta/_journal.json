@@ -22,6 +22,13 @@
       "when": 1764126242209,
       "tag": "0002_yielding_gideon",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1764212855958,
+      "tag": "0003_jittery_thunderbolts",
+      "breakpoints": true
     }
   ]
 }
