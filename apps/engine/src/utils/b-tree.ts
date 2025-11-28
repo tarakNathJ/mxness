@@ -1,21 +1,31 @@
 class order_book {
-    private buy = new Map<number, any>();
-    private sell = new Map<number, any>();
+    public buy = new Map<number, any>();
+    public sell = new Map<number, any>();
     
-    add_order ( side : string, price : number, order : number){
+    // add treade
+    add_order ( side : string, price : number, order : object){
         const order_book = side === "buy" ? this.buy : this.sell;
         if(!order_book.has(price)) order_book.set(price, []);
         order_book.get(price).push(order);
     }
+    // delete treade
+    delete_order (user_id:number ,side :string){
+        const order_book = side === "buy" ? this.buy : this.sell;
 
-    get_bast_price_for_buy (){
-        return Math.max(...this.buy.keys())
+        for (const [price, orders] of order_book) {
+            const index = orders.findIndex((order:any) => order.user === user_id);
+            if (index !== -1) {
+                orders.splice(index, 1);
+                if (orders.length === 0) {
+                    order_book.delete(price);
+                }
+
+                 return;
+            }
+
+        }
+
     }
-
-    get_bast_price_for_sell (){
-        return Math.min(...this.sell.keys())
-    }
-
 
     get_order_book (side : string , price : number){
         const order_book = side === "buy" ? this.buy : this.sell;   

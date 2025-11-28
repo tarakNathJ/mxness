@@ -19,6 +19,10 @@ class kafka_instance {
     await this.producer.connect();
     return this.producer;
   }
+
+
+
+  
   public async kafka_consumer(groupId :string , topic : string) :Promise<Consumer>{
     if(this.consumer) return this.consumer;
     
