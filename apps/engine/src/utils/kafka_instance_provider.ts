@@ -28,3 +28,5 @@ class kafka_instance {
     return this.consumer;
   }
 }
+
+export {kafka_instance}
