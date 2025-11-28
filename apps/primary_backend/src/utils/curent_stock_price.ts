@@ -5,7 +5,7 @@ config();
 
 class kafka_instance {
   private kafka: Kafka | undefined;
-  private producer: Producer |undefined;
+  private producer: Producer | undefined;
   private consumer: Consumer | undefined;
   private kafka_topic: string | undefined;
   private kafka_group_id: string | undefined;
@@ -18,8 +18,6 @@ class kafka_instance {
       clientId: process.env.KAFKA_CLIENT_ID!,
       brokers: [process.env.KAFKA_BROKER!],
     });
-
-    
   }
 
   // kafka consumer consume binance data and  send all data
@@ -50,14 +48,17 @@ class kafka_instance {
   }
 
   //   init kafka consumer
-  private async init_kafka_consumer(group_id: string) {
+  private async init_kafka_consumer(
+    group_id: string,
+    topic: string = this.kafka_topic!
+  ) {
     try {
       if (this.consumer) return this.consumer;
 
       this.consumer = this.kafka?.consumer({ groupId: group_id });
       await this.consumer?.connect();
       await this.consumer?.subscribe({
-        topic: this.kafka_topic!,
+        topic: topic,
         fromBeginning: true,
       });
 
@@ -74,7 +75,29 @@ class kafka_instance {
     this.producer = this.kafka?.producer() as Producer;
     await this.producer?.connect();
 
-    return this.producer
+    return this.producer;
+  }
+
+  public async get_user_trade_data(group_id: string, topic: string) {
+    try {
+      const consumer = await this.init_kafka_consumer(group_id, topic);
+      consumer?.run({
+        eachMessage: async ({ topic, partition, message }) => {
+          const data = JSON.parse(JSON.stringify(message.value));
+          console.log(data);
+
+          consumer.commitOffsets([
+            {
+              topic,
+              partition,
+              offset: (Number(message.offset) + 1).toString(),
+            },
+          ]);
+        },
+      });
+    } catch (error: any) {
+      throw new Error(error.message);
+    }
   }
 }
 
