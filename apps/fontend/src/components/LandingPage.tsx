@@ -1,7 +1,7 @@
 import React from 'react';
 import { TrendingUp, Shield, Zap, BarChart3, Brain, Lock, Star } from 'lucide-react';
 import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis , Tooltip } from 'recharts';
-
+import {useNavigate } from "react-router-dom"
 const chartData = [
   { time: '00:00', price: 42000 },
   { time: '04:00', price: 43200 },
@@ -28,6 +28,9 @@ const testimonials = [
 ];
 
 export function LandingPage({ onNavigate }: { onNavigate: (page: string) => void }) {
+const navigator = useNavigate();
+
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-[#0D1117] dark:via-[#0D1117] dark:to-slate-950">
       {/* Hero Section */}
@@ -49,13 +52,13 @@ export function LandingPage({ onNavigate }: { onNavigate: (page: string) => void
             
             <div className="flex flex-wrap gap-4">
               <button 
-                onClick={() => onNavigate('signup')}
+                onClick={() => navigator("/login")}
                 className="px-8 py-4 rounded-xl bg-gradient-to-r from-teal-500 to-blue-500 text-white hover:shadow-lg hover:shadow-teal-500/25 transition-all"
               >
                 Start Trading Free
               </button>
               <button 
-                onClick={() => onNavigate('dashboard')}
+                onClick={() => navigator("/dashboard")}
                 className="px-8 py-4 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition-all"
               >
                 View Demo

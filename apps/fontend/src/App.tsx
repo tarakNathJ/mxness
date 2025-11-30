@@ -8,7 +8,7 @@ import { Dashboard } from "./components/Dashboard.jsx";
 import { Layout } from "./components/Layout.jsx";
 import { MarketsPage } from "./components/MarketsPage.jsx";
 import { PortfolioPage } from "./components/PortfolioPage.jsx";
-import {TradePage} from  "./components/TradePage.jsx";
+import { TradePage } from "./components/TradePage.jsx";
 
 type Page =
   | "landing"
@@ -60,9 +60,9 @@ function App() {
               }
             />
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/markets" element={<MarketsPage/>} />
-            <Route path="/portfolio" element={<PortfolioPage/>} />
-            <Route path="/trade" element ={<TradePage/>}/>
+            <Route path="/markets" element={<MarketsPage />} />
+            <Route path="/portfolio" element={<PortfolioPage />} />
+            <Route path="/trade" element={<TradePage />} />
           </Routes>
         </Layout>
       </ThemeProvider>

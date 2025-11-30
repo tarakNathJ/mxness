@@ -1,6 +1,7 @@
 import React from 'react';
-import { LayoutDashboard, TrendingUp, Wallet, ArrowLeftRight, Settings, Sun, Moon, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, TrendingUp, Wallet, ArrowLeftRight, Settings, Sun, Moon, LogOut, Menu, X  ,Home} from 'lucide-react';
 import { useTheme } from './ThemeProvider';
+import { useNavigate } from 'react-router-dom';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -11,13 +12,15 @@ interface LayoutProps {
 export function Layout({ children, currentPage, onNavigate }: LayoutProps) {
   const { theme, toggleTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const navigate = useNavigate()
   
   const navigation = [
-    { name: 'Dashboard', icon: LayoutDashboard, page: 'dashboard' },
-    { name: 'Markets', icon: TrendingUp, page: 'markets' },
-    { name: 'Portfolio', icon: Wallet, page: 'portfolio' },
-    { name: 'Trade', icon: ArrowLeftRight, page: 'trade' },
-    { name: 'Settings', icon: Settings, page: 'settings' },
+    { name: 'Home', icon: Home, page: '/' },
+    { name: 'Dashboard', icon: LayoutDashboard, page: '/dashboard' },
+    { name: 'Markets', icon: TrendingUp, page: '/markets' },
+    { name: 'Portfolio', icon: Wallet, page: '/portfolio' },
+    { name: 'Trade', icon: ArrowLeftRight, page: '/trade' },
+    
   ];
   
   return (
@@ -45,7 +48,7 @@ export function Layout({ children, currentPage, onNavigate }: LayoutProps) {
               {navigation.map((item) => (
                 <button
                   key={item.page}
-                  onClick={() => onNavigate(item.page)}
+                  onClick={() => navigate(item.page)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${
                     currentPage === item.page
                       ? 'bg-gradient-to-r from-teal-500 to-blue-500 text-white'
@@ -84,7 +87,7 @@ export function Layout({ children, currentPage, onNavigate }: LayoutProps) {
               <button
                 key={item.page}
                 onClick={() => {
-                  onNavigate(item.page);
+                 navigate("/login")
                   setMobileMenuOpen(false);
                 }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
@@ -94,7 +97,7 @@ export function Layout({ children, currentPage, onNavigate }: LayoutProps) {
                 }`}
               >
                 <item.icon className="w-5 h-5" />
-                <span>{item.name}</span>
+                <span>{item.name} dd</span>
               </button>
             ))}
           </div>
