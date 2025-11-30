@@ -1,15 +1,26 @@
 import { Kafka, type Consumer, type Producer } from "kafkajs";
 import { config } from "dotenv";
 import { set_curent_price } from "../controller/auth.controller.js";
+import { WebSocketServer, type WebSocket } from "ws";
+import { db, eq, user, user_unique_id } from "@database/main/dist/index.js";
 config();
+
+interface user {
+  id: string;
+  ws: WebSocket;
+}
 
 class kafka_instance {
   private kafka: Kafka | undefined;
   private producer: Producer | undefined;
   private consumer: Consumer | undefined;
-  private consumer2:Consumer |undefined
+  private consumer2: Consumer | undefined;
   private kafka_topic: string | undefined;
   private kafka_group_id: string | undefined;
+  private users: user[] = [];
+
+  // socket server
+  private WSS: WebSocketServer | undefined;
 
   constructor(KAFKA_GROUP_ID: string, KAFKA_TOPIC: string) {
     this.kafka_group_id = KAFKA_GROUP_ID;
@@ -24,7 +35,10 @@ class kafka_instance {
   // kafka consumer consume binance data and  send all data
   public async init_consumer() {
     try {
-      const get_consumer = await this.init_kafka_consumer(this.kafka_group_id! , this.kafka_topic!);
+      const get_consumer = await this.init_kafka_consumer(
+        this.kafka_group_id!,
+        this.kafka_topic!
+      );
       get_consumer?.run({
         eachMessage: async ({ topic, partition, message }) => {
           const data = JSON.parse(message.value!.toString());
@@ -79,7 +93,7 @@ class kafka_instance {
     return this.producer;
   }
 
-  private async kafka_second_consumer_for_user_tread (
+  private async kafka_second_consumer_for_user_tread(
     group_id: string,
     topic: string = this.kafka_topic!
   ) {
@@ -102,12 +116,29 @@ class kafka_instance {
 
   public async get_user_trade_data(group_id: string, topic: string) {
     try {
-      const consumer = await this.kafka_second_consumer_for_user_tread(group_id, topic);
+      const consumer = await this.kafka_second_consumer_for_user_tread(
+        group_id,
+        topic
+      );
       consumer?.run({
         eachMessage: async ({ topic, partition, message }) => {
-         const data = JSON.parse(message.value!.toString());
-         console.log(data);
-
+          let data: any;
+          try {
+            data = JSON.parse(message.value!.toString()) || {};
+          } catch (error: any) {
+            console.log("samthing want wrong", error.message);
+            return;
+          }
+          try {
+            if (!data.data) return;
+            const user_data = this.users.find(
+              (us) => us.id === data.data.user_id
+            );
+            user_data?.ws.send(JSON.stringify(data));
+          } catch (error: any) {
+            console.log(error.message);
+            return;
+          }
           consumer.commitOffsets([
             {
               topic,
@@ -120,6 +151,55 @@ class kafka_instance {
     } catch (error: any) {
       throw new Error(error.message);
     }
+  }
+
+  // socket server
+
+  public start_ws_server_and_serve(server_instance: any) {
+    this.WSS = new WebSocketServer({ server: server_instance });
+
+    this.WSS.on("connection", (ws) => {
+      ws.on("message", async (message) => {
+        let data;
+        try {
+          data = JSON.parse(message.toString());
+        } catch {
+          ws.send("invalid message formet");
+        }
+
+        try {
+          switch (data.type) {
+            case "join":
+              const [result] = await db
+                .select({ u_id: user_unique_id.unique_id })
+                .from(user_unique_id)
+                .innerJoin(user, eq(user_unique_id.user_id, user.id))
+                .where(eq(user.email, data.payload.email));
+              if (!result || !result.u_id) {
+                ws.send("user not present");
+              }
+
+              this.users.push({
+                //@ts-ignore
+                id: result?.u_id,
+                ws: ws,
+              });
+
+              ws.send("Joined successfully");
+              break;
+
+            default:
+              break;
+          }
+        } catch (error: any) {
+          ws.send("samthong want wrong ");
+        }
+      });
+
+      ws.on("close", () => {
+        this.users = this.users.filter((user) => user.ws !== ws);
+      });
+    });
   }
 }
 
