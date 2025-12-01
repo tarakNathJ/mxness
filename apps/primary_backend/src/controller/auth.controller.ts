@@ -514,6 +514,8 @@ export const take_profit_and_stop_loss = async_handler(async (req, res) => {
         symbol: tread.symbol,
         user_id: tread.user_id,
         quantity: tread.quantity,
+        tread_type: tread.tread_type,
+        id: tread.id,
       });
 
     const [get_unique_id] = await tx
@@ -530,8 +532,9 @@ export const take_profit_and_stop_loss = async_handler(async (req, res) => {
       messages: [
         {
           value: JSON.stringify({
-            type: "new_tread",
+            type: "new_trade",
             data: {
+              id: create_new_trea.id,
               user_unique_id: get_unique_id.unique_id,
               symbol: symbol,
               quantity: quantity,
@@ -545,10 +548,47 @@ export const take_profit_and_stop_loss = async_handler(async (req, res) => {
       ],
     });
 
-    return true;
+    return create_new_trea;
   });
 
   return new api_responce(201, "success fully create new tread", result).send(
     res
   );
 });
+
+export const cancel_tread_for_take_profit_and_stop_loss = async_handler(
+  async (req, res) => {
+    const { id } = req.body;
+    //@ts-ignore
+    const user_id = req.user.id;
+
+    const [find_tread] = await db
+      .select({
+        id: tread.id,
+        type: tread.tread_type,
+        quantity: tread.quantity,
+      })
+      .from(tread)
+      .where(eq(tread.id, id));
+    if (!find_tread) throw new api_error(400, "your tread not find");
+    const producer = await kafka.get_producer();
+    producer.send({
+      topic: process.env.KAFKA_TOPICs!,
+      messages: [
+        {
+          value: JSON.stringify({
+            type: "cancel_trade",
+            data: {
+              id: find_tread.id,
+              type: find_tread.type,
+              quantity: find_tread.quantity,
+            },
+          }),
+        },
+      ],
+    });
+
+
+    return new api_responce(200, "success fully cancel tread").send(req)
+  }
+);

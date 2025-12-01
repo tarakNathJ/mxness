@@ -110,14 +110,21 @@ class tread_executer_engine {
         const data = JSON.parse(message.value!.toString());
         if (!data) return;
 
-        if (data.type === "new_tread") {
-          this.order_book.add_order("long", data.data.price, {
+        if (data.type === "new_trade") {
+          this.order_book.add_order(data.data.type, data.data.price, {
             user: data.data.user_unique_id,
             qty: data.data.quantity,
             take_profit: data.data.take_profit,
             stop_loss: data.data.stop_loss,
             symbol: data.data.symbol,
+            id:data.data.id
           });
+        }else if(data.type === "cancel_trade"){
+          const id = data.data.id;
+          const type = data.data.type;
+          const  qty = data.data.quantity
+          if(!id) return
+          this.order_book.cancel_trade(id,type ,qty);
         }
 
         consume.commitOffsets([

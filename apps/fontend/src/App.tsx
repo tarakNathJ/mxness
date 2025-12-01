@@ -6,7 +6,7 @@ import { Routes, Route } from "react-router-dom";
 import { AuthPage } from "./components/AuthPage.jsx";
 
 import { Layout } from "./components/Layout.jsx";
-import { MarketsPage } from "./components/MarketsPage.jsx";
+
 import { PortfolioPage } from "./components/PortfolioPage.jsx";
 import { TradePage } from "./components/TradePage.jsx";
 
@@ -60,7 +60,7 @@ function App() {
               }
             />
             
-            <Route path="/markets" element={<MarketsPage />} />
+            
             <Route path="/portfolio" element={<PortfolioPage />} />
             <Route path="/trade" element={<TradePage />} />
           </Routes>
