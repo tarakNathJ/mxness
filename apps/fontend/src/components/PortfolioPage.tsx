@@ -158,98 +158,104 @@ export function PortfolioPage() {
   const totalGainPercent = totalCost > 0 ? (totalGain / totalCost) * 100 : 0;
 
   const handleAddTransaction = (data: Omit<Trade, 'status'>) => {
+    // console.log(data);
     // 1. Add to History
-    const newTrade: Trade = {
-      ...data,
-      status: 'completed'
-    };
-    setTradeHistory(prev => [newTrade, ...prev]);
+    // const newTrade: Trade = {
+    //   ...data,
+    //   status: 'completed'
+    // };
+    // setTradeHistory(prev => [newTrade, ...prev]);
 
-    // 2. Update Holdings Logic (Simplified for demo)
-    if (data.type === 'deposit') {
-      // Just visually showing the interaction; usually would add to a 'Cash' holding
-      // Check if Cash holding exists
-      setHoldings(prev => {
-        const cashIndex = prev.findIndex(h => h.symbol === 'USD');
-        if (cashIndex >= 0) {
-          const updated = [...prev];
-          updated[cashIndex] = {
-            ...updated[cashIndex],
-            amount: updated[cashIndex].amount + data.amount,
-            value: updated[cashIndex].value + data.amount,
-            cost: updated[cashIndex].cost + data.amount, // Deposits increase cost basis 1:1
-          };
-          return updated;
-        } else {
-           return [...prev, {
-            symbol: 'USD',
-            name: 'US Dollar',
-            amount: data.amount,
-            value: data.amount,
-            cost: data.amount,
-            change: 0,
-            allocation: 0 // Will recalculate
-          }];
-        }
-      });
-    } else {
-      setHoldings(prev => {
-        const existingIndex = prev.findIndex(h => h.symbol === data.asset);
-        let newHoldings = [...prev];
+    // // 2. Update Holdings Logic (Simplified for demo)
+    // if (data.type === 'deposit') {
+    //   // Just visually showing the interaction; usually would add to a 'Cash' holding
+    //   // Check if Cash holding exists
+    //   setHoldings(prev => {
+    //     const cashIndex = prev.findIndex(h => h.symbol === 'USD');
+    //     if (cashIndex >= 0) {
+    //       const updated = [...prev];
+    //       updated[cashIndex] = {
+    //         ...updated[cashIndex],
+    //         amount: updated[cashIndex].amount + data.amount,
+    //         value: updated[cashIndex].value + data.amount,
+    //         cost: updated[cashIndex].cost + data.amount, // Deposits increase cost basis 1:1
+    //       };
+    //       return updated;
+    //     } else {
+    //        return [...prev, {
+    //         symbol: 'USD',
+    //         name: 'US Dollar',
+    //         amount: data.amount,
+    //         value: data.amount,
+    //         cost: data.amount,
+    //         change: 0,
+    //         allocation: 0 // Will recalculate
+    //       }];
+    //     }
+    //   });
+    // } else {
+    //   setHoldings(prev => {
+    //     const existingIndex = prev.findIndex(h => h.symbol === data.asset);
+    //     let newHoldings = [...prev];
 
-        if (existingIndex >= 0) {
-          const current = newHoldings[existingIndex];
-          if (data.type === 'buy') {
-            const newAmount = current.amount + data.amount;
-            const newCost = current.cost + (data.amount * data.price);
-            // Assume current value updates to latest price for the whole holding for simplicity, 
-            // or just add the value of new purchase. Let's do a blended update.
-            // In a real app, you'd fetch live price. Here we assume the trade price is current price.
-            const newValue = newAmount * data.price; 
+    //     if (existingIndex >= 0) {
+    //       const current = newHoldings[existingIndex];
+    //       if (data.type === 'buy') {
+    //         console.log(data)
+    //         const newAmount = current.amount + data.amount;
+    //         const newCost = current.cost + (data.amount * data.price);
+    //         // Assume current value updates to latest price for the whole holding for simplicity, 
+    //         // or just add the value of new purchase. Let's do a blended update.
+    //         // In a real app, you'd fetch live price. Here we assume the trade price is current price.
+    //         const newValue = newAmount * data.price; 
             
-            newHoldings[existingIndex] = {
-              ...current,
-              amount: newAmount,
-              cost: newCost,
-              value: newValue,
-              change: ((newValue - newCost) / newCost) * 100
-            };
-          } else if (data.type === 'sell') {
-            const newAmount = Math.max(0, current.amount - data.amount);
-            // Sell doesn't change cost basis per share, but reduces total cost basis proportionally
-            const costPerShare = current.cost / current.amount;
-            const newCost = newAmount * costPerShare;
-            const newValue = newAmount * data.price;
+    //         newHoldings[existingIndex] = {
+    //           ...current,
+    //           amount: newAmount,
+    //           cost: newCost,
+    //           value: newValue,
+    //           change: ((newValue - newCost) / newCost) * 100
+    //         };
+    //       } else if (data.type === 'sell') {
+
+    //         console.log(data)
+
+    //         const newAmount = Math.max(0, current.amount - data.amount);
+    //         // Sell doesn't change cost basis per share, but reduces total cost basis proportionally
+    //         const costPerShare = current.cost / current.amount;
+    //         const newCost = newAmount * costPerShare;
+    //         const newValue = newAmount * data.price;
             
-            newHoldings[existingIndex] = {
-              ...current,
-              amount: newAmount,
-              cost: newCost,
-              value: newValue,
-              change: newCost > 0 ? ((newValue - newCost) / newCost) * 100 : 0
-            };
-          }
-        } else if (data.type === 'buy') {
-          // New Holding
-          newHoldings.push({
-            symbol: data.asset,
-            name: data.asset, // Simple name mapping
-            amount: data.amount,
-            value: data.amount * data.price,
-            cost: data.amount * data.price,
-            change: 0,
-            allocation: 0
-          });
-        }
+    //         newHoldings[existingIndex] = {
+    //           ...current,
+    //           amount: newAmount,
+    //           cost: newCost,
+    //           value: newValue,
+    //           change: newCost > 0 ? ((newValue - newCost) / newCost) * 100 : 0
+    //         };
+    //       }
+    //     } else if (data.type === 'buy') {
+    //       console.log(data);
+    //       // New Holding
+    //       // newHoldings.push({
+    //       //   symbol: data.asset,
+    //       //   name: data.asset, // Simple name mapping
+    //       //   amount: data.amount,
+    //       //   value: data.amount * data.price,
+    //       //   cost: data.amount * data.price,
+    //       //   change: 0,
+    //       //   allocation: 0
+    //       // });
+    //     }
         
-        // Recalculate Allocations
-        const newTotal = newHoldings.reduce((sum, h) => sum + h.value, 0);
-        return newHoldings.map(h => ({
-          ...h,
-          allocation: newTotal > 0 ? parseFloat(((h.value / newTotal) * 100).toFixed(1)) : 0
-        }));
-      });
-    }
+    //     // Recalculate Allocations
+    //     const newTotal = newHoldings.reduce((sum, h) => sum + h.value, 0);
+    //     return newHoldings.map(h => ({
+    //       ...h,
+    //       allocation: newTotal > 0 ? parseFloat(((h.value / newTotal) * 100).toFixed(1)) : 0
+    //     }));
+    //   });
+    // }
   };
 
   return (

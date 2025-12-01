@@ -52,6 +52,8 @@ export function AuthPage({
           }
         );
         if (result.data.success) {
+          localStorage.setItem("access_token",result.data.data.token);
+          localStorage.setItem("email",result.data.data.email)
           navigate("/trade");
         }
 
