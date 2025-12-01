@@ -434,11 +434,29 @@ export const get_user_balance = async_handler(async (req, res) => {
     .from(account_balance)
     .where(eq(account_balance.user_id, user_id));
 
-  if (!user_balance) {
+  const user_normal_trade = await db
+    .select({
+      price: tread.price,
+      symbol: tread.symbol,
+      tread_type: tread.tread_type,
+      quantity: tread.quantity,
+    })
+    .from(tread)
+    .where(eq(tread.user_id, user_id));
+  const user_option_trade = await db
+    .select({
+      open: options_tread.open_price,
+      close: options_tread.close_price,
+      symbol: options_tread.symbol,
+      qty:options_tread.quantity
+    })
+    .from(options_tread)
+    .where(eq(options_tread.user_id, user_id));
+  if (!user_balance ||! user_normal_trade || !user_option_trade) {
     throw new api_error(400, "balance not found");
   }
 
-  return new api_responce(200, "user balance", user_balance).send(res);
+  return new api_responce(200, "user balance", {user_balance ,user_normal_trade,user_option_trade}).send(res);
 });
 
 // get user all tread
@@ -562,7 +580,7 @@ export const cancel_tread_for_take_profit_and_stop_loss = async_handler(
     //@ts-ignore
     const user_id = req.user.id;
 
-    if(!user_id || !id) throw new api_error(400,"please fill all the fields")
+    if (!user_id || !id) throw new api_error(400, "please fill all the fields");
 
     const result = await db.transaction(async (tx) => {
       const [find_tread] = await tx
@@ -570,16 +588,23 @@ export const cancel_tread_for_take_profit_and_stop_loss = async_handler(
           id: options_tread.id,
           type: options_tread.tread_type,
           quantity: options_tread.quantity,
-          symbol:options_tread.symbol
+          symbol: options_tread.symbol,
         })
         .from(options_tread)
         .where(eq(options_tread.id, id));
 
-      if( !find_tread?.symbol || !find_tread.quantity) return false
-       const {price}  =  get_price_data_for_symbol(find_tread?.symbol , find_tread?.quantity , 1)
-    
-      const [status] = await tx.update(options_tread).set({close_price:price,updated_at: new Date }).where(eq(options_tread.id,find_tread.id)).returning({id:options_tread.id})
-    
+      if (!find_tread?.symbol || !find_tread.quantity) return false;
+      const { price } = get_price_data_for_symbol(
+        find_tread?.symbol,
+        find_tread?.quantity,
+        1
+      );
+
+      const [status] = await tx
+        .update(options_tread)
+        .set({ close_price: price, updated_at: new Date() })
+        .where(eq(options_tread.id, find_tread.id))
+        .returning({ id: options_tread.id });
 
       if (!find_tread) throw new api_error(400, "your tread not find");
       const producer = await kafka.get_producer();
@@ -599,11 +624,11 @@ export const cancel_tread_for_take_profit_and_stop_loss = async_handler(
         ],
       });
 
-
-      return status
+      return status;
     });
 
-
-    return new api_responce(200, "success fully cancel tread",result).send(res);
+    return new api_responce(200, "success fully cancel tread", result).send(
+      res
+    );
   }
 );
