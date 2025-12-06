@@ -1,136 +1,563 @@
-# Turborepo starter
+# Exness Clone
 
-This Turborepo starter is maintained by the Turborepo core team.
+A full-stack trading platform clone built with a microservices architecture, featuring real-time market data streaming, order matching engine, and comprehensive user management.
 
-## Using this example
+## 🏗️ Architecture Overview
 
-Run the following command:
+This project implements a distributed trading system using:
+- **Microservices Architecture** with Docker containerization
+- **Event-Driven Design** using Apache Kafka for message streaming
+- **Time-Series Database** (TimescaleDB) for efficient market data storage
+- **Turborepo** monorepo structure for code organization
 
-```sh
-npx create-turbo@latest
+## 📋 Table of Contents
+
+- [Features](#-features)
+- [Tech Stack](#-tech-stack)
+- [Architecture Components](#-architecture-components)
+- [Prerequisites](#-prerequisites)
+- [Installation](#-installation)
+- [Configuration](#-configuration)
+- [Usage](#-usage)
+- [API Documentation](#-api-documentation)
+- [Development](#-development)
+- [Deployment](#-deployment)
+- [Troubleshooting](#-troubleshooting)
+- [Contributing](#-contributing)
+- [License](#-license)
+
+## ✨ Features
+
+- 🔐 **User Authentication & Authorization** with JWT
+- 📊 **Real-time Market Data** streaming via WebSocket
+- 💹 **Order Matching Engine** for trade execution
+- 📈 **Time-Series Data Storage** for historical market data
+- 🔄 **Event-Driven Architecture** with Kafka message broker
+- 🐳 **Fully Containerized** deployment with Docker Compose
+- 🚀 **Scalable Microservices** architecture
+- 🔍 **Real-time Data Polling** from external sources
+- 📡 **Reverse Proxy** with Nginx for load balancing
+
+## 🛠️ Tech Stack
+
+### Backend Services
+- **Node.js** - Runtime environment
+- **TypeScript** - Type-safe development
+- **Express.js** - Web framework
+- **Apache Kafka** - Event streaming platform (KRaft mode)
+- **TimescaleDB** - PostgreSQL-based time-series database
+- **Nginx** - Reverse proxy and load balancer
+
+### Frontend
+- **Next.js** - React framework
+- **React** - UI library
+- **Turborepo** - Monorepo build system
+
+### DevOps
+- **Docker** - Containerization
+- **Docker Compose** - Multi-container orchestration
+
+## 🏛️ Architecture Components
+
+### 1. **Primary Backend** (`primary-backend`)
+- **Purpose**: Handles user authentication, authorization, and user-related operations
+- **Port**: 3000 (HTTP), 9078 (WebSocket)
+- **Responsibilities**:
+  - JWT-based authentication
+  - User registration and login
+  - User trade management
+  - Database interactions
+
+### 2. **Publish Data Service** (`publish_data`)
+- **Purpose**: Publishes market data to Kafka topics
+- **Port**: 5076
+- **Responsibilities**:
+  - Market data ingestion
+  - Data validation and formatting
+  - Publishing to MARKET-DATA topic
+
+### 3. **Poller Service** (`poller`)
+- **Purpose**: Polls external data sources for market information
+- **Responsibilities**:
+  - Fetching real-time market data
+  - Data transformation
+  - Feeding data to publish_data service
+
+### 4. **Engine Service** (`engine`)
+- **Purpose**: Core order matching and trade execution engine
+- **Responsibilities**:
+  - Order matching algorithm
+  - Trade execution
+  - Order book management
+  - Publishing trade results to USER-TRADE topic
+  - Storing trade data in TimescaleDB
+
+### 5. **TimescaleDB**
+- **Purpose**: Time-series optimized PostgreSQL database
+- **Port**: 5432
+- **Responsibilities**:
+  - Storing market data with time-series optimization
+  - Trade history
+  - User account information
+
+### 6. **Apache Kafka**
+- **Purpose**: Message broker for event streaming
+- **Port**: 9092 (Client), 9093 (Controller)
+- **Mode**: KRaft (no Zookeeper dependency)
+- **Topics**:
+  - `MARKET-DATA`: Real-time market prices
+  - `TRADE`: User trade requests
+  - `USER-TRADE`: Executed trade results
+
+### 7. **Nginx**
+- **Purpose**: Reverse proxy and load balancer
+- **Port**: 80
+- **Responsibilities**:
+  - Routing requests to backend services
+  - Load balancing
+  - SSL termination (when configured)
+
+## 📦 Prerequisites
+
+Before running this project, ensure you have:
+
+- **Docker** (version 20.10 or higher)
+- **Docker Compose** (version 3.9 or higher)
+- **Git** for cloning the repository
+- **Node.js** (version 18+ for local development)
+- **npm/yarn/pnpm** for package management
+
+### System Requirements
+
+- **RAM**: Minimum 4GB (2GB allocated to Kafka alone)
+- **Disk Space**: At least 10GB free space
+- **CPU**: 2+ cores recommended
+
+## 🚀 Installation
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/tarakNathJ/Exness-Clone-.git
+cd Exness-Clone-
 ```
 
-## What's inside?
+### 2. Install Dependencies (for local development)
 
-This Turborepo includes the following packages/apps:
-
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
+```bash
+npm install
+# or
+yarn install
+# or
+pnpm install
 ```
 
-You can build a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+### 3. Create Nginx Configuration
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
+Create the nginx configuration directory and file:
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
+```bash
+mkdir -p nginx/conf.d
 ```
 
-### Develop
+Create `nginx/conf.d/default.conf`:
 
-To develop all apps and packages, run the following command:
+```nginx
+upstream primary_backend {
+    server primary-backend:3000;
+}
+
+upstream work_flow {
+    server work_flow:8080;
+}
+
+server {
+    listen 80;
+    server_name localhost;
+
+    location /api/auth/ {
+        proxy_pass http://primary_backend/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /api/workflow/ {
+        proxy_pass http://work_flow/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location / {
+        return 404;
+    }
+}
+```
+
+## ⚙️ Configuration
+
+### Environment Variables
+
+The Docker Compose file includes pre-configured environment variables. Key configurations:
+
+#### Primary Backend
+```env
+DATABASE_URL=postgresql://postgres:mysecretpassword@timescaledb:5432/postgres
+KAFKA_BROKER=localhost:9092
+JWT_SECRET=my-first-secret
+PORT=9078
+```
+
+#### Kafka Topics
+- `MARKET-DATA`: Market price updates
+- `TRADE`: User trade orders
+- `USER-TRADE`: Trade execution results
+
+**⚠️ Security Note**: Change default passwords and secrets before deploying to production!
+
+### Production Configuration
+
+For production, update the following:
+
+1. **Database Password**: Change `POSTGRES_PASSWORD` in TimescaleDB
+2. **JWT Secret**: Use a strong, random secret for `JWT_SECRET`
+3. **Kafka Security**: Enable authentication and encryption
+4. **Nginx SSL**: Add SSL/TLS certificates for HTTPS
+
+## 🎯 Usage
+
+### Starting the Services
+
+```bash
+# Start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# View logs for specific service
+docker-compose logs -f primary-backend
+```
+
+### Stopping the Services
+
+```bash
+# Stop all services
+docker-compose down
+
+# Stop and remove volumes (⚠️ This will delete all data)
+docker-compose down -v
+```
+
+### Accessing Services
+
+- **Primary Backend API**: http://localhost:3000
+- **WebSocket Connection**: ws://localhost:9078
+- **Publish Data API**: http://localhost:5076
+- **TimescaleDB**: postgresql://postgres:mysecretpassword@localhost:5432/postgres
+- **Kafka**: localhost:9092
+- **Nginx Proxy**: http://localhost:80
+
+## 📚 API Documentation
+
+### Authentication Endpoints
+
+#### Register User
+```bash
+POST /api/register
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "securePassword123",
+  "name": "John Doe"
+}
+```
+
+#### Login
+```bash
+POST /api/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "securePassword123"
+}
+
+Response:
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": { ... }
+}
+```
+
+### Trading Endpoints
+
+#### Place Order
+```bash
+POST /api/trade
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "symbol": "BTC/USD",
+  "type": "BUY",
+  "quantity": 0.5,
+  "price": 45000
+}
+```
+
+#### Get Market Data
+```bash
+GET /api/market-data?symbol=BTC/USD
+```
+
+### WebSocket Connection
+
+```javascript
+const ws = new WebSocket('ws://localhost:9078');
+
+ws.onopen = () => {
+  console.log('Connected to trading server');
+  
+  // Subscribe to market data
+  ws.send(JSON.stringify({
+    type: 'subscribe',
+    channel: 'market-data',
+    symbols: ['BTC/USD', 'ETH/USD']
+  }));
+};
+
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  console.log('Market update:', data);
+};
+```
+
+## 💻 Development
+
+### Project Structure
 
 ```
-cd my-turborepo
+Exness-Clone-/
+├── apps/
+│   ├── docs/              # Documentation Next.js app
+│   ├── web/               # Main web application
+│   ├── primary-backend/   # Authentication service
+│   ├── publish_data/      # Data publishing service
+│   ├── poller/            # Market data poller
+│   └── engine/            # Order matching engine
+├── packages/
+│   ├── ui/                # Shared UI components
+│   ├── eslint-config/     # Shared ESLint config
+│   └── typescript-config/ # Shared TypeScript config
+├── nginx/
+│   └── conf.d/            # Nginx configurations
+├── docker-compose.yml     # Docker orchestration
+├── turbo.json            # Turborepo configuration
+└── package.json          # Root package configuration
+```
 
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
+### Running in Development Mode
+
+```bash
+# Install global turbo (recommended)
+npm install -g turbo
+
+# Start development servers
 turbo dev
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
-```
+# Build all packages
+turbo build
 
-You can develop a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
-
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
+# Run specific package
 turbo dev --filter=web
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
 ```
 
-### Remote Caching
+### Building Docker Images
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+```bash
+# Build specific service
+docker build -t taraknathjana09/primary_backend:latest ./apps/primary-backend
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
+# Build all services
+docker-compose build
 
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
+# Rebuild and restart a specific service
+docker-compose up -d --build primary-backend
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+### Database Migrations
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+```bash
+# Access TimescaleDB
+docker exec -it timescaledb psql -U postgres -d postgres
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
+# Run migrations (if using a migration tool)
+docker exec -it primary_backend npm run migrate
 ```
 
-## Useful Links
+## 🌐 Deployment
 
-Learn more about the power of Turborepo:
+### Production Deployment Checklist
 
-- [Tasks](https://turborepo.com/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.com/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.com/docs/reference/configuration)
-- [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
-# Exness-Clone-
+- [ ] Update all default passwords and secrets
+- [ ] Configure SSL/TLS certificates for Nginx
+- [ ] Enable Kafka authentication and encryption
+- [ ] Set up database backups
+- [ ] Configure monitoring and logging
+- [ ] Set resource limits in docker-compose.yml
+- [ ] Use environment-specific configurations
+- [ ] Enable CORS properly for production domains
+- [ ] Set up CI/CD pipeline
+- [ ] Configure auto-scaling (if using Kubernetes)
+
+### Scaling Services
+
+To scale specific services:
+
+```bash
+# Scale the engine service to 3 instances
+docker-compose up -d --scale engine=3
+
+# Note: Kafka partitioning should be configured accordingly
+```
+
+### Health Checks
+
+Add health checks to docker-compose.yml:
+
+```yaml
+primary-backend:
+  healthcheck:
+    test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+    interval: 30s
+    timeout: 10s
+    retries: 3
+```
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+#### 1. Kafka Connection Issues
+
+**Problem**: Services can't connect to Kafka
+
+**Solution**:
+```bash
+# Check if Kafka is running
+docker-compose ps kafka
+
+# View Kafka logs
+docker-compose logs kafka
+
+# Verify Kafka topics
+docker exec -it kafka kafka-topics.sh --list --bootstrap-server localhost:9092
+```
+
+#### 2. Database Connection Errors
+
+**Problem**: Services fail to connect to TimescaleDB
+
+**Solution**:
+```bash
+# Check database is running
+docker-compose ps timescaledb
+
+# Test connection
+docker exec -it timescaledb psql -U postgres -d postgres -c "SELECT 1;"
+
+# Verify network connectivity
+docker network inspect exness-clone-_backend_network
+```
+
+#### 3. Out of Memory Errors
+
+**Problem**: Services crash due to memory limits
+
+**Solution**:
+- Reduce Kafka heap size in KAFKA_HEAP_OPTS
+- Increase Docker daemon memory allocation
+- Close unnecessary applications
+
+#### 4. Port Conflicts
+
+**Problem**: Port already in use
+
+**Solution**:
+```bash
+# Find process using port 3000
+lsof -i :3000
+
+# Kill the process or change port in docker-compose.yml
+```
+
+### Viewing Logs
+
+```bash
+# All services
+docker-compose logs -f
+
+# Specific service with tail
+docker-compose logs -f --tail=100 primary-backend
+
+# Export logs to file
+docker-compose logs > app-logs.txt
+```
+
+### Resetting the Environment
+
+```bash
+# Stop and remove everything
+docker-compose down -v
+
+# Remove images (optional)
+docker-compose down --rmi all
+
+# Clean rebuild
+docker-compose build --no-cache
+docker-compose up -d
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+### Development Guidelines
+
+- Follow TypeScript best practices
+- Write unit tests for new features
+- Update documentation for API changes
+- Follow conventional commit messages
+- Ensure Docker builds succeed
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Built with [Turborepo](https://turborepo.com/)
+- Powered by [Apache Kafka](https://kafka.apache.org/)
+- Database by [TimescaleDB](https://www.timescale.com/)
+- Inspired by [Exness](https://www.exness.com/) trading platform
+
+## 📧 Contact
+
+Tarak Nath Jana - [@tarakNathJ](https://github.com/tarakNathJ)
+
+Project Link: [https://github.com/tarakNathJ/Exness-Clone-](https://github.com/tarakNathJ/Exness-Clone-)
+
+---
+
+**⭐ If you find this project helpful, please consider giving it a star!**
