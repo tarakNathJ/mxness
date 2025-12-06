@@ -77,7 +77,7 @@ function generateDummyCandles(
   const startTime = new Date(now.getTime() - count * 60 * 1000);
 
   const basePrices: Record<string, number> = {
-    BTCUSDT: 86964,
+    BTCUSDT: 92000,
     ETHUSDT: 2802.31,
     SOLUSDT: 2802.31,
     BNBUSDT: 829.45,
@@ -224,12 +224,7 @@ function TradeLog({ activity, selectedPair }: TradeLogProps) {
     
   </div>
 
-  <div className="pt-4 border-t border-gray-700">
-    <p className="text-sm text-center text-gray-400 flex items-center justify-center gap-1">
-      <Zap className="w-4 h-4 text-amber-400" />
-      Simulated market data.
-    </p>
-  </div>
+  
 </div>
 
   );
@@ -734,7 +729,7 @@ function TradePage() {
 
                   <input
                     type="number"
-                    value={amount}
+                    placeholder={`${amount}`}
                     onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
                     // Input focus ring uses blue accent
                     className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"

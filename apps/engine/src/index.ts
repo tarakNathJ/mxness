@@ -269,29 +269,3 @@ get_market_data.get_user_tread(
   process.env.USER_KAFKA_TOPIC!
 );
 
-/*
-
-
-
-/opt/kafka/bin/kafka-topics.sh --create \
-  --topic TRADE \
-  --bootstrap-server localhost:9092 \
-  --partitions 1 \
-  --replication-factor 1
-
-/opt/kafka/bin/kafka-topics.sh --create \
-  --topic MARKET-DATA \
-  --bootstrap-server localhost:9092 \
-  --partitions 1 \
-  --replication-factor 1
-
-/opt/kafka/bin/kafka-topics.sh --create \
-  --topic USER-TRADE \
-  --bootstrap-server localhost:9092 \
-  --partitions 1 \
-  --replication-factor 1
-
-
-
-
-*/

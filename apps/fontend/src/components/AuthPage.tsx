@@ -24,7 +24,7 @@ export function AuthPage({
       return;
     }
 
-    console.log(import.meta.env.VITE_API_URL)
+    // console.log(import.meta.env.VITE_API_URL)
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
