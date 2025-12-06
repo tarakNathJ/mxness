@@ -116,6 +116,7 @@ This project implements a distributed trading system using:
   - Routing requests to backend services
   - Load balancing
   - SSL termination (when configured)
+- **Proxies**: `primary-backend` and `publish_data` services
 
 ## 📦 Prerequisites
 
@@ -167,14 +168,15 @@ upstream primary_backend {
     server primary-backend:3000;
 }
 
-upstream work_flow {
-    server work_flow:8080;
+upstream publish_data {
+    server publish_data:5076;
 }
 
 server {
     listen 80;
     server_name localhost;
 
+    # Primary Backend (Auth & User Management)
     location /api/auth/ {
         proxy_pass http://primary_backend/;
         proxy_set_header Host $host;
@@ -183,16 +185,39 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    location /api/workflow/ {
-        proxy_pass http://work_flow/;
+    # WebSocket Support for Primary Backend
+    location /ws/ {
+        proxy_pass http://primary_backend/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 86400;
+    }
+
+    # Publish Data Service (Market Data API)
+    location /api/market/ {
+        proxy_pass http://publish_data/;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
+    # Health check endpoint
+    location /health {
+        access_log off;
+        return 200 "healthy\n";
+        add_header Content-Type text/plain;
+    }
+
+    # Default location
     location / {
-        return 404;
+        return 404 '{"error": "Not Found"}';
+        add_header Content-Type application/json;
     }
 }
 ```
@@ -209,12 +234,33 @@ DATABASE_URL=postgresql://postgres:mysecretpassword@timescaledb:5432/postgres
 KAFKA_BROKER=localhost:9092
 JWT_SECRET=my-first-secret
 PORT=9078
+KAFKA_TOPIC=MARKET-DATA
+KAFKA_TOPIC_PRIMARY=USER-TRADE
+```
+
+#### Engine Service
+```env
+MARKET_KAFKA_TOPIC=MARKET-DATA
+USER_KAFKA_TOPIC=TRADE
+KAFKA_USER_TREAD_TOPIC=USER-TRADE
+DATABASE_URL=postgresql://postgres:mysecretpassword@timescaledb:5432/postgres
+```
+
+#### Publish Data Service
+```env
+PORT=5076
+KAFKA_TOPIC=MARKET-DATA
+KAFKA_BROKER=localhost:9092
 ```
 
 #### Kafka Topics
 - `MARKET-DATA`: Market price updates
 - `TRADE`: User trade orders
 - `USER-TRADE`: Trade execution results
+
+**⚠️ Known Issues in docker-compose.yml**:
+1. Line 89: `imescaledb` should be `timescaledb` in engine dependencies
+2. Line 60: `KAFKA_BROCKER` should be `KAFKA_BROKER` in poller environment
 
 **⚠️ Security Note**: Change default passwords and secrets before deploying to production!
 
@@ -254,12 +300,15 @@ docker-compose down -v
 
 ### Accessing Services
 
-- **Primary Backend API**: http://localhost:3000
-- **WebSocket Connection**: ws://localhost:9078
-- **Publish Data API**: http://localhost:5076
+- **Nginx Proxy**: http://localhost:80
+  - Auth API: http://localhost/api/auth/
+  - Market Data API: http://localhost/api/market/
+  - WebSocket: ws://localhost/ws/
+- **Primary Backend** (Direct): http://localhost:3000
+- **WebSocket** (Direct): ws://localhost:9078
+- **Publish Data API** (Direct): http://localhost:5076
 - **TimescaleDB**: postgresql://postgres:mysecretpassword@localhost:5432/postgres
 - **Kafka**: localhost:9092
-- **Nginx Proxy**: http://localhost:80
 
 ## 📚 API Documentation
 
@@ -443,7 +492,40 @@ primary-backend:
 
 ### Common Issues
 
-#### 1. Kafka Connection Issues
+#### 1. Nginx Configuration Missing
+
+**Problem**: Nginx container fails to start with "no such file or directory"
+
+**Solution**:
+```bash
+# Create nginx configuration directory
+mkdir -p nginx/conf.d
+
+# Create the default.conf file (see Configuration section above)
+# Or copy from the README's Nginx configuration example
+
+# Restart nginx
+docker-compose up -d nginx
+```
+
+#### 2. Engine Service Dependency Error
+
+**Problem**: Engine service fails with "service 'imescaledb' not found"
+
+**Solution**: This is a typo in docker-compose.yml line 89. Fix it:
+```yaml
+# Change this:
+depends_on:
+  - kafka
+  - imescaledb  # ❌ Wrong
+
+# To this:
+depends_on:
+  - kafka
+  - timescaledb  # ✅ Correct
+```
+
+#### 3. Kafka Connection Issues
 
 **Problem**: Services can't connect to Kafka
 
@@ -457,9 +539,11 @@ docker-compose logs kafka
 
 # Verify Kafka topics
 docker exec -it kafka kafka-topics.sh --list --bootstrap-server localhost:9092
+
+# Note: Fix KAFKA_BROCKER typo in poller service to KAFKA_BROKER
 ```
 
-#### 2. Database Connection Errors
+#### 4. Database Connection Errors
 
 **Problem**: Services fail to connect to TimescaleDB
 
@@ -475,7 +559,7 @@ docker exec -it timescaledb psql -U postgres -d postgres -c "SELECT 1;"
 docker network inspect exness-clone-_backend_network
 ```
 
-#### 3. Out of Memory Errors
+#### 5. Out of Memory Errors
 
 **Problem**: Services crash due to memory limits
 
@@ -484,7 +568,7 @@ docker network inspect exness-clone-_backend_network
 - Increase Docker daemon memory allocation
 - Close unnecessary applications
 
-#### 4. Port Conflicts
+#### 6. Port Conflicts
 
 **Problem**: Port already in use
 

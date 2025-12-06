@@ -167,8 +167,8 @@ services:
     image: nginx:latest
     container_name: nginx-proxy
     depends_on:
-      - primary-backend
-      - work_flow
+      - publish_data
+      - primary_backend
     ports:
       - "80:80"
     volumes:
