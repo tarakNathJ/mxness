@@ -132,4 +132,4 @@ class PrometheusService {
   }
 }
 
-export default PrometheusService;
+export {PrometheusService} ;
