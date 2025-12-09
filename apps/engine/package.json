@@ -14,7 +14,8 @@
   "dependencies": {
     "@database/main": "^1.0.0",
     "dotenv": "^17.2.3",
-    "kafkajs": "^2.2.4"
+    "kafkajs": "^2.2.4",
+    "monitoring": "^1.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"
