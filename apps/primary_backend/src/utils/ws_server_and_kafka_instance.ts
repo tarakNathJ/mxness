@@ -3,6 +3,8 @@ import { config } from "dotenv";
 import { set_curent_price } from "../controller/auth.controller.js";
 import { WebSocketServer, type WebSocket } from "ws";
 import { db, eq, user, user_unique_id } from "@database/main/dist/index.js";
+
+import { metrics } from "../app.js";
 // import { curent_price } from "../controller/auth.controller.js";
 config();
 
@@ -42,6 +44,9 @@ class kafka_instance {
       );
       get_consumer?.run({
         eachMessage: async ({ topic, partition, message }) => {
+          /////////////////////////metrics/////////////////////////
+          metrics.kafka_messages_consumed.inc({topic:this.kafka_topic! })
+          ////////////////////////////////////////////////////////
           const data = JSON.parse(message.value!.toString());
           if (!data) return;
           // console.log(data);
@@ -123,7 +128,11 @@ class kafka_instance {
       );
       consumer?.run({
         eachMessage: async ({ topic, partition, message }) => {
+          /////////////////////////metrics//////////////// 
+          metrics.kafka_messages_consumed.inc({topic:topic})
+          ////////////////////////////////////////
           let data: any;
+          const start = performance.now();
           try {
             data = JSON.parse(message.value!.toString()) || {};
             console.log(data);
@@ -138,6 +147,9 @@ class kafka_instance {
             );
             
             user_data?.ws.send(JSON.stringify(data));
+            ////////////////////////////metrics////////////////
+            metrics.trade_processing_duration.observe({ topic: "ws_send" }, (performance.now() - start)/1000);
+            ///////////////////////////////////////////////
           } catch (error: any) {
             console.log(error.message);
             return;
@@ -162,6 +174,10 @@ class kafka_instance {
     this.WSS = new WebSocketServer({ server: server_instance });
 
     this.WSS.on("connection", (ws) => {
+      /////////////////////////metrics///////////////
+      metrics.ws_connections.inc();
+      metrics.ws_active_connections.inc()
+      ////////////////////////////metrics/////////////////////
       ws.on("message", async (message) => {
         let data;
         try {

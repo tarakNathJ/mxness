@@ -14,6 +14,7 @@
   "license": "ISC",
   "dependencies": {
     "@database/main": "^1.0.0",
+    "@express/monitoring": "^1.0.0",
     "bcrypt": "^6.0.0",
     "body-parser": "^2.2.1",
     "cors": "^2.8.5",
@@ -21,12 +22,14 @@
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "kafkajs": "^2.2.4",
+    "response-time": "^2.3.4",
     "ws": "^8.18.3"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.19",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/response-time": "^2.3.9",
     "nodemon": "^3.1.11"
   }
 }

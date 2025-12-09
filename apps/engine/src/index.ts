@@ -3,7 +3,7 @@ import { order_book } from "./utils/b-tree.js";
 import { kafka_instance } from "./utils/kafka_instance_provider.js";
 import type { Producer } from "kafkajs";
 import { cancel_tread } from "./utils/cancel_tread_function.js";
-import {PrometheusService} from "@express/monitoring"
+import { PrometheusService } from "@express/monitoring";
 
 const metrics = new PrometheusService();
 
@@ -25,6 +25,9 @@ class tread_executer_engine {
     );
 
     this.kafka_producer();
+    setInterval(() => {
+      metrics.pushMetrics("tread_executer_engine");
+    }, 5000);
   }
 
   private async kafka_producer() {
@@ -32,7 +35,7 @@ class tread_executer_engine {
     await this.producer.connect();
   }
 
-  // get market come from poller 
+  // get market come from poller
   public async get_current_market_price(group_id: string, topic: string) {
     const consumer =
       await this.kafka_instance_for_current_trade_data!.kafka_consumer(
@@ -41,10 +44,10 @@ class tread_executer_engine {
       );
     consumer.run({
       eachMessage: async ({ topic, partition, message }: any) => {
-         /////////////////// monitoring////////////////// 
-        metrics.kafka_messages_consumed.inc();
+        /////////////////// monitoring//////////////////
+        metrics.kafka_messages_consumed.inc({ topic });
         const startTime = performance.now();
-         /////////////////// ////////////////// ////////
+        /////////////////// ////////////////// ////////
         const data = JSON.parse(message.value!.toString());
         if (!data.data) return;
 
@@ -93,9 +96,9 @@ class tread_executer_engine {
           }
         }
 
-        /////////////////// monitoring////////////////// 
+        /////////////////// monitoring//////////////////
         const duration = (performance.now() - startTime) / 1000;
-        metrics.trade_processing_duration.observe(duration)
+        metrics.trade_processing_duration.observe({ topic }, duration);
         ////////////////////////////////////////////////////
 
         consumer.commitOffsets([
@@ -109,7 +112,6 @@ class tread_executer_engine {
     });
   }
 
-
   // get user tread comming from primary backend
   public async get_user_tread(group_id: string, topic: string) {
     const consume = await this.kafka_instance_for_user_tread!.kafka_consumer(
@@ -118,12 +120,11 @@ class tread_executer_engine {
     );
     consume.run({
       eachMessage: async ({ topic, partition, message }) => {
+        /////////////////// monitoring//////////////////
 
-         /////////////////// monitoring////////////////// 
+        metrics.kafka_messages_consumed.inc({ topic });
 
-         metrics.kafka_messages_consumed.inc()
-
-         ////////////////////////////////////////////////
+        ////////////////////////////////////////////////
         const data = JSON.parse(message.value!.toString());
         if (!data) return;
 
@@ -168,8 +169,8 @@ class tread_executer_engine {
   ) {
     if (current_stock_price * quentity >= tp) {
       // console.log(user_id, "  delete user");
-       /////////////////// monitoring////////////////// 
-      metrics.trade_tp_triggered.inc()
+      /////////////////// monitoring//////////////////
+      metrics.trade_tp_triggered.inc();
       ////////////////////////////////////////////////
       this.order_book.delete_order(user_id, "long");
       const status = await cancel_tread(current_stock_price * quentity, id);
@@ -186,8 +187,8 @@ class tread_executer_engine {
       current_stock_price * quentity < tp &&
       current_stock_price * quentity > sl
     ) {
-       /////////////////// monitoring////////////////// 
-      metrics.trade_hold.inc()
+      /////////////////// monitoring//////////////////
+      metrics.trade_hold.inc();
       ////////////////////////////////////////////////
       this.send_message_from_user(
         current_stock_price * quentity,
@@ -197,11 +198,9 @@ class tread_executer_engine {
         id
       );
     } else if (current_stock_price * quentity <= sl) {
-
-       /////////////////// monitoring////////////////// 
-      metrics.trade_sl_triggered.inc()
+      /////////////////// monitoring//////////////////
+      metrics.trade_sl_triggered.inc();
       ////////////////////////////////////////////////
-
 
       this.order_book.delete_order(user_id, "long");
       const status = await cancel_tread(current_stock_price * quentity, id);
@@ -217,7 +216,6 @@ class tread_executer_engine {
     }
   }
 
-
   // Evaluates TP / SL / HOLD logic for SHORT trades
   private async calculate_take_profit_stop_loss_for_seller(
     current_stock_price: number,
@@ -230,8 +228,8 @@ class tread_executer_engine {
     id: number
   ) {
     if (current_stock_price * quentity <= tp) {
-       /////////////////// monitoring////////////////// 
-       metrics.trade_tp_triggered.inc()
+      /////////////////// monitoring//////////////////
+      metrics.trade_tp_triggered.inc();
       ///////////////////////////////////////////
 
       this.order_book.delete_order(user_id, "short");
@@ -249,7 +247,7 @@ class tread_executer_engine {
       current_stock_price * quentity > tp &&
       current_stock_price * quentity < sl
     ) {
-       /////////////////// monitoring////////////////// 
+      /////////////////// monitoring//////////////////
       metrics.trade_hold.inc();
       /////////////////////////////////////
 
@@ -261,10 +259,9 @@ class tread_executer_engine {
         id
       );
     } else if (current_stock_price * quentity >= sl) {
-
-       /////////////////// monitoring////////////////// 
-       metrics.trade_sl_triggered.inc()
-       //////////////////////////////////////////////
+      /////////////////// monitoring//////////////////
+      metrics.trade_sl_triggered.inc();
+      //////////////////////////////////////////////
 
       this.order_book.delete_order(user_id, "short");
       const status = await cancel_tread(current_stock_price * quentity, id);
@@ -286,15 +283,13 @@ class tread_executer_engine {
     symbol: string,
     user_id: string,
     message: string,
-    id:number
+    id: number
   ) {
-
     console.log(current_price);
-     /////////////////// monitoring////////////////// 
-    metrics.kafka_messages_produced.inc()
+    /////////////////// monitoring//////////////////
+    metrics.kafka_messages_produced.inc({topic:process.env.KAFKA_USER_TREAD_TOPIC!});
     /////////////////////////////////////////
 
-    
     this.producer?.send({
       topic: process.env.KAFKA_USER_TREAD_TOPIC!,
       messages: [
@@ -306,7 +301,7 @@ class tread_executer_engine {
               symbol,
               user_id,
               message,
-              id
+              id,
             },
           }),
         },
@@ -324,4 +319,3 @@ get_market_data.get_user_tread(
   process.env.USER_KAFKA_GROUP_ID!,
   process.env.USER_KAFKA_TOPIC!
 );
-
