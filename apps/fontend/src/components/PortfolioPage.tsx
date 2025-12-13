@@ -25,6 +25,8 @@ import { api_init } from "./api/auth";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { add_data } from "../redux/user_info";
+import { toast } from "sonner";
+
 
 // import { Trade, Holding } from "../types";
 export interface Holding {
@@ -185,97 +187,7 @@ export function PortfolioPage() {
   const totalGainPercent = totalCost > 0 ? (totalGain / totalCost) * 100 : 0;
 
   const handleAddTransaction = (data: Omit<Trade, "status">) => {
-    // console.log(data);
-    // 1. Add to History
-    // const newTrade: Trade = {
-    //   ...data,
-    //   status: 'completed'
-    // };
-    // setTradeHistory(prev => [newTrade, ...prev]);
-    // // 2. Update Holdings Logic (Simplified for demo)
-    // if (data.type === 'deposit') {
-    //   // Just visually showing the interaction; usually would add to a 'Cash' holding
-    //   // Check if Cash holding exists
-    //   setHoldings(prev => {
-    //     const cashIndex = prev.findIndex(h => h.symbol === 'USD');
-    //     if (cashIndex >= 0) {
-    //       const updated = [...prev];
-    //       updated[cashIndex] = {
-    //         ...updated[cashIndex],
-    //         amount: updated[cashIndex].amount + data.amount,
-    //         value: updated[cashIndex].value + data.amount,
-    //         cost: updated[cashIndex].cost + data.amount, // Deposits increase cost basis 1:1
-    //       };
-    //       return updated;
-    //     } else {
-    //        return [...prev, {
-    //         symbol: 'USD',
-    //         name: 'US Dollar',
-    //         amount: data.amount,
-    //         value: data.amount,
-    //         cost: data.amount,
-    //         change: 0,
-    //         allocation: 0 // Will recalculate
-    //       }];
-    //     }
-    //   });
-    // } else {
-    //   setHoldings(prev => {
-    //     const existingIndex = prev.findIndex(h => h.symbol === data.asset);
-    //     let newHoldings = [...prev];
-    //     if (existingIndex >= 0) {
-    //       const current = newHoldings[existingIndex];
-    //       if (data.type === 'buy') {
-    //         console.log(data)
-    //         const newAmount = current.amount + data.amount;
-    //         const newCost = current.cost + (data.amount * data.price);
-    //         // Assume current value updates to latest price for the whole holding for simplicity,
-    //         // or just add the value of new purchase. Let's do a blended update.
-    //         // In a real app, you'd fetch live price. Here we assume the trade price is current price.
-    //         const newValue = newAmount * data.price;
-    //         newHoldings[existingIndex] = {
-    //           ...current,
-    //           amount: newAmount,
-    //           cost: newCost,
-    //           value: newValue,
-    //           change: ((newValue - newCost) / newCost) * 100
-    //         };
-    //       } else if (data.type === 'sell') {
-    //         console.log(data)
-    //         const newAmount = Math.max(0, current.amount - data.amount);
-    //         // Sell doesn't change cost basis per share, but reduces total cost basis proportionally
-    //         const costPerShare = current.cost / current.amount;
-    //         const newCost = newAmount * costPerShare;
-    //         const newValue = newAmount * data.price;
-    //         newHoldings[existingIndex] = {
-    //           ...current,
-    //           amount: newAmount,
-    //           cost: newCost,
-    //           value: newValue,
-    //           change: newCost > 0 ? ((newValue - newCost) / newCost) * 100 : 0
-    //         };
-    //       }
-    //     } else if (data.type === 'buy') {
-    //       console.log(data);
-    //       // New Holding
-    //       // newHoldings.push({
-    //       //   symbol: data.asset,
-    //       //   name: data.asset, // Simple name mapping
-    //       //   amount: data.amount,
-    //       //   value: data.amount * data.price,
-    //       //   cost: data.amount * data.price,
-    //       //   change: 0,
-    //       //   allocation: 0
-    //       // });
-    //     }
-    //     // Recalculate Allocations
-    //     const newTotal = newHoldings.reduce((sum, h) => sum + h.value, 0);
-    //     return newHoldings.map(h => ({
-    //       ...h,
-    //       allocation: newTotal > 0 ? parseFloat(((h.value / newTotal) * 100).toFixed(1)) : 0
-    //     }));
-    //   });
-    // }
+  
   };
 
   // @ts-ignore
@@ -320,10 +232,20 @@ export function PortfolioPage() {
       console.log(data);
 
       if (!data || !data.user_balance || data.user_balance.latest == 0) {
-        const responce = await api_init.get("/api/get-user-balance");
-        if (responce.data.success) {
-          dispatch(add_data(responce.data.data));
-          setBalance(responce.data.data);
+        try {
+          const responce = await api_init.get("/api/get-user-balance");
+          if (responce.data.success) {
+            dispatch(add_data(responce.data.data));
+            setBalance(responce.data.data);
+            toast("success fully get user info",{
+              description:responce.data.success
+            })
+          }
+          
+        } catch (error: any) {
+          toast(`failed to get user data `,{
+            description:error.message
+          })
         }
       }
       setBalance(data);
@@ -574,118 +496,7 @@ export function PortfolioPage() {
         </div>
       </div>
 
-      {/* Holdings Table
-      <div className="p-6 rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
-        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6 px-2">
-          Holdings
-        </h3>
-
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-slate-50 dark:bg-slate-800/50">
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider rounded-l-xl">
-                  Asset
-                </th>
-                <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Amount
-                </th>
-                <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Value
-                </th>
-                <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Avg Cost
-                </th>
-                <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Change
-                </th>
-                <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider rounded-r-xl">
-                  Alloc
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
-              {holdings.map((holding, i) => (
-                <tr
-                  key={i}
-                  className="hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition-colors group"
-                >
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-300">
-                        {holding.symbol.substring(0, 1)}
-                      </div>
-                      <div>
-                        <p className="font-semibold text-slate-900 dark:text-white">
-                          {holding.symbol}
-                        </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          {holding.name}
-                        </p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-right font-medium text-slate-700 dark:text-slate-300">
-                    {holding.amount.toLocaleString(undefined, {
-                      maximumFractionDigits: 4,
-                    })}
-                  </td>
-                  <td className="px-6 py-4 text-right font-semibold text-slate-900 dark:text-white">
-                    $
-                    {holding.value.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                    })}
-                  </td>
-                  <td className="px-6 py-4 text-right text-slate-500 dark:text-slate-400 text-sm">
-                    $
-                    {holding.cost > 0
-                      ? (holding.cost / holding.amount).toLocaleString(
-                          undefined,
-                          { maximumFractionDigits: 2 }
-                        )
-                      : 0}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div
-                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        holding.change > 0
-                          ? "bg-green-500/10 text-green-600 dark:text-green-400"
-                          : holding.change < 0
-                            ? "bg-red-500/10 text-red-600 dark:text-red-400"
-                            : "bg-slate-100 text-slate-500"
-                      }`}
-                    >
-                      {holding.change > 0 ? (
-                        <TrendingUp className="w-3 h-3" />
-                      ) : holding.change < 0 ? (
-                        <TrendingDown className="w-3 h-3" />
-                      ) : null}
-                      <span>
-                        {holding.change > 0 ? "+" : ""}
-                        {holding.change.toFixed(2)}%
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center gap-2 justify-end">
-                      <div className="w-16 h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-gradient-to-r from-teal-500 to-blue-500 rounded-full"
-                          style={{ width: `${holding.allocation}%` }}
-                        />
-                      </div>
-                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400 w-8">
-                        {holding.allocation}%
-                      </span>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div> */}
-
+      
       {/* Trade History */}
       <div className="p-6 rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
         <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6 px-2">
@@ -720,53 +531,55 @@ export function PortfolioPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
-              {data?.user_option_trade?.map((trade: object_Trade, i: number) => (
-                <tr
-                  key={i}
-                  className="hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition-colors"
-                >
-                  <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">
-                    {trade.date.split(":")[0]}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border ${
-                        trade.type === "long"
-                          ? "bg-green-500/5 border-green-500/20 text-green-600 dark:text-green-400"
-                          : trade.type === "short"
-                            ? "bg-red-500/5 border-red-500/20 text-red-600 dark:text-red-400"
-                            : "bg-blue-500/5 border-blue-500/20 text-blue-600 dark:text-blue-400"
-                      }`}
-                    >
-                      {trade.type === "long" ? (
-                        <ArrowDownRight className="w-3 h-3" />
-                      ) : trade.type === "short" ? (
-                        <ArrowUpRight className="w-3 h-3" />
-                      ) : (
-                        <Wallet className="w-3 h-3" />
-                      )}
-                      {trade.type.toUpperCase()}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm font-bold text-slate-900 dark:text-white">
-                    {trade.symbol}
-                  </td>
-                  <td className="px-6 py-4 text-right text-sm text-slate-700 dark:text-slate-300 font-medium">
-                    {trade.open}
-                  </td>
-                  <td className="px-6 py-4 text-right text-sm text-slate-600 dark:text-slate-400">
-                    ${trade.open}
-                  </td>
-                  <td className="px-6 py-4 text-right text-sm font-bold text-slate-900 dark:text-white">
-                    ${trade.open}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300">
-                      complete
-                    </span>
-                  </td>
-                </tr>
-              ))}
+              {data?.user_option_trade?.map(
+                (trade: object_Trade, i: number) => (
+                  <tr
+                    key={i}
+                    className="hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition-colors"
+                  >
+                    <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">
+                      {trade.date.split(":")[0]}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border ${
+                          trade.type === "long"
+                            ? "bg-green-500/5 border-green-500/20 text-green-600 dark:text-green-400"
+                            : trade.type === "short"
+                              ? "bg-red-500/5 border-red-500/20 text-red-600 dark:text-red-400"
+                              : "bg-blue-500/5 border-blue-500/20 text-blue-600 dark:text-blue-400"
+                        }`}
+                      >
+                        {trade.type === "long" ? (
+                          <ArrowDownRight className="w-3 h-3" />
+                        ) : trade.type === "short" ? (
+                          <ArrowUpRight className="w-3 h-3" />
+                        ) : (
+                          <Wallet className="w-3 h-3" />
+                        )}
+                        {trade.type.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm font-bold text-slate-900 dark:text-white">
+                      {trade.symbol}
+                    </td>
+                    <td className="px-6 py-4 text-right text-sm text-slate-700 dark:text-slate-300 font-medium">
+                      {trade.open}
+                    </td>
+                    <td className="px-6 py-4 text-right text-sm text-slate-600 dark:text-slate-400">
+                      ${trade.open}
+                    </td>
+                    <td className="px-6 py-4 text-right text-sm font-bold text-slate-900 dark:text-white">
+                      ${trade.open}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+                        complete
+                      </span>
+                    </td>
+                  </tr>
+                )
+              )}
             </tbody>
           </table>
         </div>

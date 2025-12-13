@@ -46,12 +46,12 @@ class kafka_instance {
         eachMessage: async ({ topic, partition, message }) => {
           /////////////////////////metrics/////////////////////////
           metrics.kafka_messages_consumed.inc({topic:this.kafka_topic! })
-          // console.log(data)
+          
           ////////////////////////////////////////////////////////
           const data = JSON.parse(message.value!.toString());
-          // console.log(data)
+          
           if (!data) return;
-          // console.log(data);
+          
           ////////////////////////////update price //////////////////
           set_curent_price(data.data.s, parseFloat(data.data.c));
           ///////////////////////////////end/////////////////////////
@@ -65,7 +65,7 @@ class kafka_instance {
         },
       });
     } catch (error: any) {
-      console.error("Error initializing consumer:", error.message);
+     
       throw Error(error.message);
     }
   }
@@ -87,8 +87,8 @@ class kafka_instance {
 
       return this.consumer;
     } catch (error: any) {
-      console.error("Error initializing Kafka:", error.message);
-      throw error;
+      
+      throw error.message;
     }
   }
 
@@ -117,8 +117,8 @@ class kafka_instance {
 
       return this.consumer2;
     } catch (error: any) {
-      console.error("Error initializing Kafka:", error.message);
-      throw error;
+      
+      throw error.message;
     }
   }
 
@@ -137,7 +137,7 @@ class kafka_instance {
           const start = performance.now();
           try {
             data = JSON.parse(message.value!.toString()) || {};
-            console.log(data);
+           
           } catch (error: any) {
             console.log("samthing want wrong", error.message);
             return;
@@ -153,7 +153,7 @@ class kafka_instance {
             metrics.trade_processing_duration.observe({ topic: "ws_send" }, (performance.now() - start)/1000);
             ///////////////////////////////////////////////
           } catch (error: any) {
-            console.log(error.message);
+            
             return;
           }
           consumer.commitOffsets([
@@ -207,7 +207,7 @@ class kafka_instance {
                 id: result?.u_id,
                 ws: ws,
               });
-              console.log("Joined successfully");
+              
               ws.send(
                 JSON.stringify({
                   type: "join_success",

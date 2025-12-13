@@ -88,7 +88,7 @@ class web_socket_server {
         },
       });
     } catch (error: any) {
-      console.error("Error initializing consumer:", error.message);
+      
       throw Error(error.message);
     }
   }
@@ -111,8 +111,8 @@ class web_socket_server {
 
       return this.consumer;
     } catch (error: any) {
-      console.error("Error initializing Kafka:", error.message);
-      throw error;
+    
+      throw error.message;
     }
   }
 
@@ -128,7 +128,7 @@ class web_socket_server {
         try {
           message = JSON.parse(data.toString());
         } catch (error) {
-          console.error("Error parsing message:", error);
+         
           ws.send(
             JSON.stringify({
               type: "error",
@@ -171,7 +171,7 @@ class web_socket_server {
               break;
           }
         } catch (error) {
-          console.error("Error handling request:", error);
+          
           ws.send(
             JSON.stringify({
               type: "error",
@@ -185,7 +185,7 @@ class web_socket_server {
         this.clients.forEach((client, id) => {
           if (client.socket === ws) {
             this.clients.delete(id);
-            console.log(`Client disconnected ID=${id}`);
+            
           }
         });
          this.metrics.ws_active_connections.dec();

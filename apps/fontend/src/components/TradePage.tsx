@@ -2,11 +2,9 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { TrendingUp, Info, Pencil, Minus, Clock, Zap } from "lucide-react";
 import { TradingViewChart } from "./TradingViewChart";
 import { api_init } from "./api/auth";
-import {useTread} from "../store/teadDataStore.js"
-// The Lightweight Charts library is not available via standard import,
-// so we assume it is loaded globally via CDN in the hosting HTML.
-// We must declare the types for the global object 'LightweightCharts'
-// so the TypeScript compiler doesn't throw errors.
+import { useTread } from "../store/teadDataStore.js";
+import { toast } from "sonner";
+
 declare const LightweightCharts: {
   createChart: (container: HTMLElement, options: any) => any;
   ColorType: { Solid: "solid" };
@@ -33,10 +31,7 @@ export interface TradeLogEntry {
   message?: string;
   // Added to clarify order type (Execution, TP, SL)
 }
-// <strong>Symbol:</strong> {t.symbol} <br />
-// <strong>Price:</strong> {t.current_price} <br />
-// <strong>Status:</strong> {t.message} <br />
-// <strong>Trade ID:</strong> {t.id}
+
 
 // Available trading pairs
 const AVAILABLE_PAIRS = [
@@ -87,7 +82,7 @@ function generateDummyCandles(
   };
 
   let currentPrice = basePrices[symbol] || 45000;
-  
+
   for (let i = 0; i < count; i++) {
     const candleTime = new Date(startTime.getTime() + i * 60 * 1000);
 
@@ -150,7 +145,7 @@ interface TradeLogProps {
 function TradeLog({ activity, selectedPair }: TradeLogProps) {
   const assetSymbol = selectedPair.replace("USDT", "");
   const [trades, setTrades] = useState(activity); // manage local state
-  const {remove_Tread_Data} =  useTread()
+  const { remove_Tread_Data } = useTread();
   // onCancel function to delete a trade
   const onCancel = (tradeId: number) => {
     // setTrades((prevTrades) => prevTrades.filter((t) => t.id !== tradeId));
@@ -164,9 +159,13 @@ function TradeLog({ activity, selectedPair }: TradeLogProps) {
       const responce = await api_init.post("/api/cancel_tread", { id: id });
       if (responce.data.success) {
         onCancel(id);
+        toast(`cancel tread ${id}`, {
+          description: responce.data.success,
+        });
       }
     } catch (error: any) {
       console.log(error.message);
+      toast(`${error.message || "failed cancel operation"}`);
     }
   };
 
@@ -237,16 +236,14 @@ interface TradeData {
 function TradePage() {
   const candleObject = useRef<Record<string, number>>({});
 
-
-
   // --- Initialization using a single source of truth ---
   const INITIAL_PAIR = "BTCUSDT";
-  
+
   const initialData = generateDummyCandles(INITIAL_PAIR);
 
   // --- STATE ---
   const [selectedPair, setSelectedPair] = useState<string>(INITIAL_PAIR);
-  const [candles, setCandles] = useState<CandleData[]>(initialData); 
+  const [candles, setCandles] = useState<CandleData[]>(initialData);
 
   const [currentTickerPrice, setCurrentTickerPrice] = useState<number>(
     initialData.length > 0 ? initialData[initialData.length - 1].close : 0
@@ -254,8 +251,6 @@ function TradePage() {
   // Trade History
   const [tradeHistory, setTradeHistory] = useState<TradeLogEntry[]>([]);
   const tradeIdRef = useRef(0);
-
-  
 
   // --- REFS ---
   const wsRef = useRef<WebSocket | null>(null);
@@ -282,7 +277,7 @@ function TradePage() {
   const effectivePrice = currentTickerPrice;
   const totalValue = amount * (effectivePrice || 0);
 
-  const {upsert_Tread_Data ,tread_Data}  = useTread()
+  const { upsert_Tread_Data, tread_Data } = useTread();
 
   // const [activity, setActivity] = useState<TradeData[]>([]);
   // Update TP/SL price state when the current market price changes or order type/trade type switches
@@ -330,45 +325,66 @@ function TradePage() {
 
     switch (orderType) {
       case "bracket":
-        // console.log(
-        //   amount,
-        //   tradeType,
-        //   assetSymbol,
-        //   stopLossPrice,
-        //   takeProfitPrice
-        // );symbol, quantity, type, take_profit, stop_loss
+ 
 
-        const responce = await api_init.post("/api/stop-loss-take-profit", {
-          // @ts-ignore
-          symbol: assetSymbol,
-          quantity: amount,
-          type: tradeType == "buy" ? "long" : "short",
-          take_profit: takeProfitPrice,
-          stop_loss: stopLossPrice,
-        });
-        console.log(responce);
+        try {
+          const responce = await api_init.post("/api/stop-loss-take-profit", {
+            // @ts-ignore
+            symbol: assetSymbol,
+            quantity: amount,
+            type: tradeType == "buy" ? "long" : "short",
+            take_profit: takeProfitPrice,
+            stop_loss: stopLossPrice,
+          });
+
+          if (responce.data.success) {
+            toast(`success fully ${tradeType}`, {
+              description: responce.data.success,
+            });
+          }
+        } catch (error: any) {
+          toast(`${error.messages || "failed"}`);
+        }
+
         break;
       case "market":
         if (tradeType == "buy") {
-          const responce = await api_init.post(
-            "/api/purchase-new-simple-trade",
-            {
-              // @ts-ignore
-              symbol: assetSymbol,
-              quantity: amount,
+          try {
+            const responce = await api_init.post(
+              "/api/purchase-new-simple-trade",
+              {
+                // @ts-ignore
+                symbol: assetSymbol,
+                quantity: amount,
+              }
+            );
+
+            if (responce.data.success) {
+              toast(`success fully ${tradeType}`, {
+                description: responce.data.success,
+              });
             }
-          );
-          console.log(responce);
+          } catch (error: any) {
+            toast(`${error.messages || "failed"}`);
+          }
         } else if (tradeType == "sell") {
-          const responce = await api_init.post(
-            "/api/sell-existing-simple-trade",
-            {
-              // @ts-ignore symbol, quantity
-              symbol: assetSymbol,
-              quantity: amount,
+          try {
+            const responce = await api_init.post(
+              "/api/sell-existing-simple-trade",
+              {
+                // @ts-ignore symbol, quantity
+                symbol: assetSymbol,
+                quantity: amount,
+              }
+            );
+            if (responce.data.success) {
+              toast(`success fully ${tradeType}`, {
+                description: responce.data.success,
+              });
             }
-          );
-          console.log(responce);
+          } catch (error: any) {
+            toast(`${error.messages || "failed"}`);
+          }
         }
 
         break;
@@ -391,8 +407,10 @@ function TradePage() {
   useEffect(() => {
     selectedPairRef.current = selectedPair;
 
-
-    const freshDummyData = generateDummyCandles(selectedPair,candleObject?.current);
+    const freshDummyData = generateDummyCandles(
+      selectedPair,
+      candleObject?.current
+    );
 
     // CRITICAL FIX: Reset all data related state and refs simultaneously
     setCandles(freshDummyData);
@@ -519,7 +537,6 @@ function TradePage() {
           setCurrentTickerPrice(last.close);
           setPrice(last.close);
 
-          console.log("Initial data loaded ✔️");
           return; // stop here (first message processed)
         }
 
@@ -542,37 +559,11 @@ function TradePage() {
         const parsedMsg = JSON.parse(msg.data);
         if (parsedMsg.type !== "tread_status") return;
 
-         console.log(parsedMsg);
         const trade = parsedMsg.data;
         if (!trade?.id) return;
         upsert_Tread_Data(trade);
 
-        // setActivity((prev) => {
-        //   const exists = prev.find((t) => t.id === trade.id);
-
-        //   if (exists) {
-        //     // Update existing entry timestamp
-        //     return prev.map((t) =>
-        //       t.id === trade.id
-        //         ? {
-        //             ...t,
-        //             ...trade,
-        //             updatedAt: Date.now(),
-        //           }
-        //         : t
-        //     );
-        //   }
-
-        //   // Add new entry
-        //   return [
-        //     ...prev,
-        //     {
-        //       ...trade,
-        //       updatedAt: Date.now(),
-        //     },
-        //   ];
-        // });
-        // console.log(parsedMsg);
+       
       } catch (error: any) {
         console.error(" socket Error parsing:", error);
       }

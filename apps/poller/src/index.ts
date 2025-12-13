@@ -29,7 +29,7 @@ class polling_binance_data {
     // connect to binance websocket
     const binance_ws = new WebSocket(this.binance_stream_url);
     binance_ws.on("open", () => {
-      console.log("connection open ");
+      
     });
 
     // listen all message and push in kafka
@@ -49,7 +49,7 @@ class polling_binance_data {
 
         
       } catch (error: any) {
-        console.error("Failed to process WebSocket message:", error.message);
+        
       }
     });
 
@@ -89,9 +89,9 @@ class polling_binance_data {
     setInterval(async () => {
       try {
         await metrics.pushMetrics("binance_polling");
-        console.log("Metrics pushed to PushGateway");
+      
       } catch (err: any) {
-        console.error("Failed to push metrics:", err.message);
+        throw err.message
       }
     }, 5000);
   }

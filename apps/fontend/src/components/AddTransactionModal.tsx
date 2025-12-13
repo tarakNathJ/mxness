@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { X, Wallet, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
 import { api_init } from "./api/auth";
-// import { toast } from "./ui/use-toast";
+import { toast } from "sonner";
 
 export interface Holding {
   symbol: string;
@@ -73,39 +73,60 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
     // console.log(responce);
     switch (type) {
       case "deposit":
-        const responce = await api_init.post("/api/add-balance", {
-          symbol: "USD",
-          balance: amount,
-        });
+        try {
+          const responce = await api_init.post("/api/add-balance", {
+            symbol: "USD",
+            balance: amount,
+          });
 
-        if (responce.data.success) {
-          alert("balance add success fully");
+          if (responce.data.success) {
+            toast("success add balance", {
+              description: amount,
+            });
+          }
+        } catch (error: any) {
+          toast("add balance failed", {
+            description: error.message || "samthing is wrong",
+          });
         }
         break;
       case "buy":
-        const responce_for_buy = await api_init.post(
-          "/api/purchase-new-simple-trade",
-          {
-            symbol: asset,
-            quantity: amount,
-          }
-        );
+        try {
+          const responce_for_buy = await api_init.post(
+            "/api/purchase-new-simple-trade",
+            {
+              symbol: asset,
+              quantity: amount,
+            }
+          );
 
-        if (responce_for_buy.data.success) {
-          alert("balance add success fully");
+          if (responce_for_buy.data.success) {
+            toast(" trade success fully  purchase ", {
+              description: responce_for_buy.data.success,
+            });
+          }
+        } catch (error: any) {
+          toast("purchase stock failed ", {
+            description: error.message || "samthing is wrong",
+          });
         }
 
       case "sell":
-        const responce_for_sell = await api_init.post(
-          "/api/sell-existing-simple-trade",
-          {
-            symbol: asset,
-            quantity: amount,
+        try {
+          const responce_for_sell = await api_init.post(
+            "/api/sell-existing-simple-trade",
+            {
+              symbol: asset,
+              quantity: amount,
+            }
+          );
+          if (responce_for_sell.data.success) {
+            toast(" trade success fully  purchase ", {
+              description: responce_for_sell.data.success,
+            });
           }
-        );
-
-        if (responce_for_sell.data.success) {
-          alert("balance add success fully");
+        } catch (error: any) {
+          toast("sell stock failed");
         }
 
       default:

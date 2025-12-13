@@ -168,7 +168,7 @@ class tread_executer_engine {
     id: number
   ) {
     if (current_stock_price * quentity >= tp) {
-      // console.log(user_id, "  delete user");
+     
       /////////////////// monitoring//////////////////
       metrics.trade_tp_triggered.inc();
       ////////////////////////////////////////////////
@@ -285,7 +285,7 @@ class tread_executer_engine {
     message: string,
     id: number
   ) {
-    console.log(current_price);
+    
     /////////////////// monitoring//////////////////
     metrics.kafka_messages_produced.inc({topic:process.env.KAFKA_USER_TREAD_TOPIC!});
     /////////////////////////////////////////

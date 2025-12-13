@@ -2,8 +2,9 @@ import React, { useState } from "react";
 import { Mail, Lock, Eye, EyeOff, Shield, TrendingUp } from "lucide-react";
 import { api_init } from "./api/auth.js";
 import axios from "axios";
+import { toast } from "sonner";
 
-import { useNavigate } from "react-router-dom";
+import { data, useNavigate } from "react-router-dom";
 
 export function AuthPage({
   onNavigate,
@@ -18,7 +19,6 @@ export function AuthPage({
   const [showPassword, setShowPassword] = useState(false);
 
   const onSubmit = async () => {
-
     if (!email.trim()) {
       alert("Email is required");
       return;
@@ -39,42 +39,54 @@ export function AuthPage({
 
     if (isLogin) {
       try {
-        const result = await api_init.post("/api/login",{
-           email: email,
-            password: password,
-        })
-        ;
-
-        console.log(result);
+        const result = await api_init.post("/api/login", {
+          email: email,
+          password: password,
+        });
+        // console.log(result);
         if (result.data.success) {
-          localStorage.setItem("access_token",result.data.data.token);
-          localStorage.setItem("email",result.data.data.email)
+          toast("success fully login", {
+            description: result.data.data.email,
+          });
+          localStorage.setItem("access_token", result.data.data.token);
+          localStorage.setItem("email", result.data.data.email);
           navigate("/trade");
         }
-
-        console.log(result);
-      } catch (error: any) {}
+      } catch (error: any) {
+        toast("login failed", {
+          description: error.message,
+        });
+      }
     } else {
       if (!user.trim()) {
         alert("user name is required");
         return;
       }
 
-      const result = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/register`,
-        {
-          name:user,
-          email: email,
-          password: password,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
+      try {
+        const result = await axios.post(
+          `${import.meta.env.VITE_API_URL}/api/register`,
+          {
+            name: user,
+            email: email,
+            password: password,
           },
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        if (result.data.success) {
+          toast("success fully sign up", {
+            description: result.data,
+          });
+          navigate("/trade");
         }
-      );
-      if (result.data.success) {
-        navigate("/trade");
+      } catch (error: any) {
+        toast("signup failed", {
+          description: error.message,
+        });
       }
     }
   };
