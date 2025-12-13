@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { TrendingUp, Info, Pencil, Minus, Clock, Zap } from "lucide-react";
 import { TradingViewChart } from "./TradingViewChart";
 import { api_init } from "./api/auth";
+import {useTread} from "../store/teadDataStore.js"
 // The Lightweight Charts library is not available via standard import,
 // so we assume it is loaded globally via CDN in the hosting HTML.
 // We must declare the types for the global object 'LightweightCharts'
@@ -149,10 +150,11 @@ interface TradeLogProps {
 function TradeLog({ activity, selectedPair }: TradeLogProps) {
   const assetSymbol = selectedPair.replace("USDT", "");
   const [trades, setTrades] = useState(activity); // manage local state
-
+  const {remove_Tread_Data} =  useTread()
   // onCancel function to delete a trade
   const onCancel = (tradeId: number) => {
-    setTrades((prevTrades) => prevTrades.filter((t) => t.id !== tradeId));
+    // setTrades((prevTrades) => prevTrades.filter((t) => t.id !== tradeId));
+    remove_Tread_Data(tradeId);
   };
 
   // Reverse the array to show most recent trades first
@@ -244,7 +246,8 @@ function TradePage() {
 
   // --- STATE ---
   const [selectedPair, setSelectedPair] = useState<string>(INITIAL_PAIR);
-  const [candles, setCandles] = useState<CandleData[]>(initialData);
+  const [candles, setCandles] = useState<CandleData[]>(initialData); 
+
   const [currentTickerPrice, setCurrentTickerPrice] = useState<number>(
     initialData.length > 0 ? initialData[initialData.length - 1].close : 0
   );
@@ -279,7 +282,9 @@ function TradePage() {
   const effectivePrice = currentTickerPrice;
   const totalValue = amount * (effectivePrice || 0);
 
-  const [activity, setActivity] = useState<TradeData[]>([]);
+  const {upsert_Tread_Data ,tread_Data}  = useTread()
+
+  // const [activity, setActivity] = useState<TradeData[]>([]);
   // Update TP/SL price state when the current market price changes or order type/trade type switches
   useEffect(() => {
     if (currentTickerPrice > 0 && orderType === "bracket") {
@@ -536,34 +541,37 @@ function TradePage() {
       try {
         const parsedMsg = JSON.parse(msg.data);
         if (parsedMsg.type !== "tread_status") return;
+
+         console.log(parsedMsg);
         const trade = parsedMsg.data;
         if (!trade?.id) return;
+        upsert_Tread_Data(trade);
 
-        setActivity((prev) => {
-          const exists = prev.find((t) => t.id === trade.id);
+        // setActivity((prev) => {
+        //   const exists = prev.find((t) => t.id === trade.id);
 
-          if (exists) {
-            // Update existing entry timestamp
-            return prev.map((t) =>
-              t.id === trade.id
-                ? {
-                    ...t,
-                    ...trade,
-                    updatedAt: Date.now(),
-                  }
-                : t
-            );
-          }
+        //   if (exists) {
+        //     // Update existing entry timestamp
+        //     return prev.map((t) =>
+        //       t.id === trade.id
+        //         ? {
+        //             ...t,
+        //             ...trade,
+        //             updatedAt: Date.now(),
+        //           }
+        //         : t
+        //     );
+        //   }
 
-          // Add new entry
-          return [
-            ...prev,
-            {
-              ...trade,
-              updatedAt: Date.now(),
-            },
-          ];
-        });
+        //   // Add new entry
+        //   return [
+        //     ...prev,
+        //     {
+        //       ...trade,
+        //       updatedAt: Date.now(),
+        //     },
+        //   ];
+        // });
         // console.log(parsedMsg);
       } catch (error: any) {
         console.error(" socket Error parsing:", error);
@@ -906,7 +914,7 @@ function TradePage() {
             <div className="space-y-6">
               <div className="p-6 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 h-full">
                 {/* Pass tradeHistory to TradeLog */}
-                <TradeLog activity={activity} selectedPair={selectedPair} />
+                <TradeLog activity={tread_Data} selectedPair={selectedPair} />
               </div>
             </div>
           </div>

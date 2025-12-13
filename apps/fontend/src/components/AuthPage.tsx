@@ -39,18 +39,13 @@ export function AuthPage({
 
     if (isLogin) {
       try {
-        const result = await axios.post(
-          `${import.meta.env.VITE_API_URL}/api/login`,
-          {
-            email: email,
+        const result = await api_init.post("/api/login",{
+           email: email,
             password: password,
-          },
-          {
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
+        })
+        ;
+
+        console.log(result);
         if (result.data.success) {
           localStorage.setItem("access_token",result.data.data.token);
           localStorage.setItem("email",result.data.data.email)

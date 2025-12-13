@@ -46,6 +46,8 @@ class polling_binance_data {
             },
           ],
         });
+
+        
       } catch (error: any) {
         console.error("Failed to process WebSocket message:", error.message);
       }

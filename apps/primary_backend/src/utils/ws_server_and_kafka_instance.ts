@@ -46,8 +46,10 @@ class kafka_instance {
         eachMessage: async ({ topic, partition, message }) => {
           /////////////////////////metrics/////////////////////////
           metrics.kafka_messages_consumed.inc({topic:this.kafka_topic! })
+          // console.log(data)
           ////////////////////////////////////////////////////////
           const data = JSON.parse(message.value!.toString());
+          // console.log(data)
           if (!data) return;
           // console.log(data);
           ////////////////////////////update price //////////////////
