@@ -4,6 +4,7 @@ import { TradingViewChart } from "./TradingViewChart";
 import { api_init } from "./api/auth";
 import { useTread } from "../store/teadDataStore.js";
 import { toast } from "sonner";
+import { isAxiosError } from "axios";
 
 declare const LightweightCharts: {
   createChart: (container: HTMLElement, options: any) => any;
@@ -142,6 +143,53 @@ interface TradeLogProps {
 }
 
 function TradeLog({ activity, selectedPair }: TradeLogProps) {
+
+  const userInfoRaw = sessionStorage.getItem("user_info");
+  const simpal_trades = userInfoRaw ? JSON.parse(userInfoRaw)?.user_normal_trade : [];
+  // old tread data
+  async function sell_our_existing_stock(symbol: string, quantity: number) {
+    try {
+     const responce =  await api_init.post("/api/sell-existing-simple-trade", {
+        symbol: symbol,
+        quantity: quantity,
+      });
+
+      console.log(responce)
+    } catch (error: any) {
+      if (isAxiosError(error)) {
+        if (error.response) {
+          // 1. Server responded with an error (e.g., 404, 500)
+          // Extract specific message from server if available
+          const serverMessage =
+            error.response.data?.message || JSON.stringify(error.response.data);
+
+          toast.error(`Server Error: ${error.response.status}`, {
+            description: serverMessage,
+          });
+        } else if (error.request) {
+          // 2. Request was made but no response was received (Network Error)
+          toast.error("Network Error", {
+            description: `No response from server. Code: ${error.code || "UNKNOWN"}`,
+          });
+        } else {
+          // 3. Setup Error
+          toast.error("Request Setup Error", {
+            description: error.message,
+          });
+        }
+      } else {
+        // Handling non-Axios errors (e.g., logic bugs)
+        toast.error("Application Error", {
+          description:
+            error instanceof Error
+              ? error.message
+              : "An unexpected error occurred",
+        });
+      }
+    }
+  }
+
+  ////////////////////////////
   const assetSymbol = selectedPair.replace("USDT", "");
   const [trades, setTrades] = useState(activity); // manage local state
   const { remove_Tread_Data } = useTread();
@@ -223,7 +271,39 @@ function TradeLog({ activity, selectedPair }: TradeLogProps) {
       </h2>
 
       <div className="space-y-3 max-h-[700px] overflow-y-auto">
-        <div className="p-4 rounded-lg border border-gray-700 bg-gray-800 text-white shadow-sm">hello</div>
+        {(!simpal_trades || simpal_trades.length === 0)&& (
+          <p className="text-sm text-gray-400 text-center py-4">no tread</p>
+        )}
+        {/* <div className="p-4 rounded-lg border border-gray-700 bg-gray-800 text-white shadow-sm">hello</div> */}
+        {simpal_trades?.map((tr: any, index: number) => (
+          <div
+            key={index}
+            className="p-4 rounded-lg border border-gray-700 bg-gray-800 text-white shadow-sm"
+          >
+            <p>
+              <span className="font-semibold text-gray-300">Symbol:</span>{" "}
+              <span className="text-white">{tr.symbol}</span>
+            </p>
+            <p>
+              <span className="font-semibold text-gray-300">
+                Purchase Price:
+              </span>{" "}
+              <span className="text-green-400">{tr.price?.toFixed(3)}</span>
+            </p>
+            <p>
+              <span className="font-semibold text-gray-300">Trade ID:</span>{" "}
+              <span className="text-gray-200">{tr.quantity}</span>
+            </p>
+
+            {/* Cancel button */}
+            <button
+              onClick={() => sell_our_existing_stock(tr.symbol, tr.quantity)}
+              className="mt-2 px-3 py-1 text-sm bg-red-600 hover:bg-red-700 rounded text-white self-start"
+            >
+              Sell
+            </button>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -828,7 +908,7 @@ function TradePage() {
                   <div className="flex justify-between text-sm mb-2">
                     <span className="text-slate-500">Amount</span>
                     <span className="text-slate-900 dark:text-white">
-                      {amount.toFixed(4)} {assetSymbol}
+                      {amount?.toFixed(4)} {assetSymbol}
                     </span>
                   </div>
 

@@ -229,7 +229,7 @@ export function PortfolioPage() {
       if (accesstoken == null) {
         navigator("/login");
       }
-      console.log(data);
+      
 
       if (!data || !data.user_balance || data.user_balance.latest == 0) {
         try {
@@ -290,7 +290,7 @@ export function PortfolioPage() {
             </p>
 
             <p className="text-4xl font-bold mb-4 tracking-tight">
-              ${(data?.user_balance?.balance).toFixed(2)}
+              ${(data?.user_balance?.balance)?.toFixed(2)}
             </p>
             <div className="flex items-center gap-2 bg-white/20 w-fit px-3 py-1 rounded-full backdrop-blur-sm">
               <ArrowUpRight className="w-4 h-4" />
@@ -299,7 +299,7 @@ export function PortfolioPage() {
                 {totalGain.toLocaleString(undefined, {
                   maximumFractionDigits: 0,
                 })}{" "}
-                ({totalGainPercent.toFixed(1)}%)
+                ({totalGainPercent?.toFixed(1)}%)
               </span>
             </div>
           </div>
@@ -338,8 +338,7 @@ export function PortfolioPage() {
           </p>
           <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
             {data?.user_option_trade
-              ?.reduce((sum: number, trade: object_type) => sum + trade.open, 0)
-              .toFixed(2)}
+              ?.reduce((sum: number, trade: object_type) => sum + trade.open, 0)?.toFixed(2)}
           </p>
         </div>
 
@@ -553,7 +552,7 @@ export function PortfolioPage() {
                       {trade.quantity}
                     </td>
                     <td className="px-6 py-4 text-right text-sm text-slate-600 dark:text-slate-400">
-                      ${(trade.price).toFixed(2)}
+                      ${(trade.price)?.toFixed(2)}
                     </td>
                     <td className="px-6 py-4 text-right">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300">
