@@ -6,6 +6,8 @@ import { useTread } from "../store/teadDataStore.js";
 import { toast } from "sonner";
 import { isAxiosError } from "axios";
 import { data } from "react-router-dom";
+import { add_data } from "../redux/user_info.js";
+import { useDispatch, useSelector } from "react-redux";
 
 declare const LightweightCharts: {
   createChart: (container: HTMLElement, options: any) => any;
@@ -144,21 +146,22 @@ interface TradeLogProps {
 }
 
 function TradeLog({ activity, selectedPair }: TradeLogProps) {
-
   const userInfoRaw = sessionStorage.getItem("user_info");
-  const simpal_trades = userInfoRaw ? JSON.parse(userInfoRaw)?.user_normal_trade : [];
+  const simpal_trades = userInfoRaw
+    ? JSON.parse(userInfoRaw)?.user_normal_trade
+    : [];
   // old tread data
   async function sell_our_existing_stock(symbol: string, quantity: number) {
     try {
-     const responce =  await api_init.post("/api/sell-existing-simple-trade", {
+      const responce = await api_init.post("/api/sell-existing-simple-trade", {
         symbol: symbol,
         quantity: quantity,
       });
 
-      if(responce.data.success){
-        toast(responce.data.message,{
-          description:responce.data.statuscode
-        })
+      if (responce.data.success) {
+        toast(responce.data.message, {
+          description: responce.data.statuscode,
+        });
       }
     } catch (error: any) {
       if (isAxiosError(error)) {
@@ -276,7 +279,7 @@ function TradeLog({ activity, selectedPair }: TradeLogProps) {
       </h2>
 
       <div className="space-y-3 max-h-[700px] overflow-y-auto">
-        {(!simpal_trades || simpal_trades.length === 0)&& (
+        {(!simpal_trades || simpal_trades.length === 0) && (
           <p className="text-sm text-gray-400 text-center py-4">no tread</p>
         )}
         {/* <div className="p-4 rounded-lg border border-gray-700 bg-gray-800 text-white shadow-sm">hello</div> */}
@@ -328,6 +331,8 @@ interface TradeData {
 function TradePage() {
   const candleObject = useRef<Record<string, number>>({});
 
+  const data = useSelector((state : any) => state.data.data);
+  const dispatch = useDispatch();
   // --- Initialization using a single source of truth ---
   const INITIAL_PAIR = "BTCUSDT";
 
@@ -399,6 +404,23 @@ function TradePage() {
       if (isTPDefault) setTakeProfitPrice(newTP);
       if (isSLDefault) setStopLossPrice(newSL);
     }
+    (async () => {
+      if (!data || !data.user_balance || data.user_balance.latest == 0) {
+        try {
+          const responce = await api_init.get("/api/get-user-balance");
+          if (responce.data.success) {
+            dispatch(add_data(responce.data.data));
+            toast("success fully get user info", {
+              description: responce.data.success,
+            });
+          }
+        } catch (error: any) {
+          toast(`failed to get user data `, {
+            description: error.message,
+          });
+        }
+      }
+    })();
   }, [
     currentTickerPrice,
     orderType,

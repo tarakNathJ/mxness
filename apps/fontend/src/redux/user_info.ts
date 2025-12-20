@@ -13,6 +13,7 @@ const user_info = createSlice({
             state.data = action.payload;
             StoreData(key, state.data);
         },
+
         remove_data: (state) => {
             state.data = [];
             RemoveData(key);
