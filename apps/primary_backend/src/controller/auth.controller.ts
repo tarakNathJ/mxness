@@ -7,6 +7,8 @@ import {
   eq,
   account_balance,
   tread,
+  and,
+  gt,
   desc,
   options_tread,
   user_unique_id,
@@ -14,7 +16,7 @@ import {
 import type { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import JWT from "jsonwebtoken";
-import { and } from "drizzle-orm";
+
 import { kafka_instance } from "../utils/ws_server_and_kafka_instance.js";
 
 const kafka = new kafka_instance(
@@ -442,7 +444,7 @@ export const get_user_balance = async_handler(async (req, res) => {
       quantity: tread.quantity,
     })
     .from(tread)
-    .where(eq(tread.user_id, user_id))
+    .where(and(eq(tread.user_id, user_id), gt(tread.quantity, 0)))
     .limit(20)
     .orderBy(desc(tread.created_at));
   const user_option_trade = await db

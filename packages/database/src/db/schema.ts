@@ -66,31 +66,31 @@ export const tread_history = pgTable("tread_history", {
   s: varchar("s", { length: 20 }).notNull(), // symbol
 
   // Prices
-  p: doublePrecision("p").notNull(), // last price
-  P: doublePrecision("P").notNull(), // price change percent
-  w: doublePrecision("w").notNull(), // weighted avg price
-  x: doublePrecision("x").notNull(), // previous close
-  c: doublePrecision("c").notNull(), // current close
-  Q: doublePrecision("Q").notNull(), // close qty
-  b: doublePrecision("b").notNull(), // best bid
-  B: doublePrecision("B").notNull(), // best bid qty
-  a: doublePrecision("a").notNull(), // best ask
-  A: doublePrecision("A").notNull(), // best ask qty
-  o: doublePrecision("o").notNull(), // open price
-  h: doublePrecision("h").notNull(), // high price
-  l: doublePrecision("l").notNull(), // low price
-  v: doublePrecision("v").notNull(), // total traded base asset volume
-  q: doublePrecision("q").notNull(), // total traded quote asset volume
+  p: doublePrecision("p").notNull(), 
+  P: doublePrecision("P").notNull(),  
+  w: doublePrecision("w").notNull(), 
+  x: doublePrecision("x").notNull(), 
+  c: doublePrecision("c").notNull(), 
+  Q: doublePrecision("Q").notNull(), 
+  b: doublePrecision("b").notNull(), 
+  B: doublePrecision("B").notNull(),  
+  a: doublePrecision("a").notNull(), 
+  A: doublePrecision("A").notNull(), 
+  o: doublePrecision("o").notNull(), 
+  h: doublePrecision("h").notNull(), 
+  l: doublePrecision("l").notNull(), 
+  v: doublePrecision("v").notNull(), 
+  q: doublePrecision("q").notNull(), 
 
   // Timestamps
-  O: bigint("O", { mode: "bigint" }).notNull(), // open time
-  C: bigint("C", { mode: "bigint" }).notNull(), // close time
+  O: bigint("O", { mode: "bigint" }).notNull(), 
+  C: bigint("C", { mode: "bigint" }).notNull(), 
 
   // Trade IDs
-  F: bigint("F", { mode: "bigint" }).notNull(), // first trade ID
-  L: bigint("L", { mode: "bigint" }).notNull(), // last trade ID
+  F: bigint("F", { mode: "bigint" }).notNull(),  
+  L: bigint("L", { mode: "bigint" }).notNull(), 
   n: bigint("n", { mode: "bigint" }).notNull(),
-  createdAt: timestamp("created_at"), // total number of trades
+  createdAt: timestamp("created_at"),  
 });
 
 export const options_tread = pgTable("options_tread", {

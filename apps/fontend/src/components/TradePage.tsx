@@ -5,6 +5,7 @@ import { api_init } from "./api/auth";
 import { useTread } from "../store/teadDataStore.js";
 import { toast } from "sonner";
 import { isAxiosError } from "axios";
+import { data } from "react-router-dom";
 
 declare const LightweightCharts: {
   createChart: (container: HTMLElement, options: any) => any;
@@ -154,7 +155,11 @@ function TradeLog({ activity, selectedPair }: TradeLogProps) {
         quantity: quantity,
       });
 
-      console.log(responce)
+      if(responce.data.success){
+        toast(responce.data.message,{
+          description:responce.data.statuscode
+        })
+      }
     } catch (error: any) {
       if (isAxiosError(error)) {
         if (error.response) {
@@ -291,7 +296,7 @@ function TradeLog({ activity, selectedPair }: TradeLogProps) {
               <span className="text-green-400">{tr.price?.toFixed(3)}</span>
             </p>
             <p>
-              <span className="font-semibold text-gray-300">Trade ID:</span>{" "}
+              <span className="font-semibold text-gray-300">Quantity:</span>{" "}
               <span className="text-gray-200">{tr.quantity}</span>
             </p>
 
