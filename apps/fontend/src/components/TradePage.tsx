@@ -147,7 +147,7 @@ interface TradeLogProps {
 
 function TradeLog({ activity, selectedPair }: TradeLogProps) {
   const userInfoRaw = sessionStorage.getItem("user_info");
-  const simpal_trades = userInfoRaw
+  let simpal_trades = userInfoRaw
     ? JSON.parse(userInfoRaw)?.user_normal_trade
     : [];
   // old tread data
@@ -158,6 +158,13 @@ function TradeLog({ activity, selectedPair }: TradeLogProps) {
         quantity: quantity,
       });
 
+      const after_removing_tread_data = simpal_trades.filter(
+        (data: any) => data.symbol !== symbol
+      );
+      simpal_trades = after_removing_tread_data;
+      const afterJson = JSON.parse(userInfoRaw!);
+      afterJson.user_normal_trade = after_removing_tread_data;
+      sessionStorage.setItem("user_info", JSON.stringify(afterJson));
       if (responce.data.success) {
         toast(responce.data.message, {
           description: responce.data.statuscode,
@@ -331,7 +338,7 @@ interface TradeData {
 function TradePage() {
   const candleObject = useRef<Record<string, number>>({});
 
-  const data = useSelector((state : any) => state.data.data);
+  const data = useSelector((state: any) => state.data.data);
   const dispatch = useDispatch();
   // --- Initialization using a single source of truth ---
   const INITIAL_PAIR = "BTCUSDT";
