@@ -4,8 +4,5 @@ global:
 scrape_configs:
   - job_name: prometheus
     static_configs:
-<<<<<<< HEAD
       - targets: ["0.0.0.0:9078"]
-=======
       - targets: ["10.10.086.3:9078"]
->>>>>>> a5b38c4 ( deployment issue)
