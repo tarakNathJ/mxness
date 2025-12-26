@@ -603,7 +603,7 @@ function TradePage() {
   // WEBSOCKET (Kept for structure, relies on external service)
   useEffect(() => {
     const ws = new WebSocket(`${import.meta.env.VITE_API_URI_PUBLISH}`);
-    const socket = new WebSocket(`${import.meta.env.VITE_API_URL}`);
+    const socket = new WebSocket(`ws://primary.taraknathjana.com`);
     wsRef.current = ws;
     socketRef.current = socket;
 
