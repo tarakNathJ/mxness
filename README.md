@@ -13,6 +13,8 @@ A full-stack trading platform clone inspired by Exness, built with modern techno
 
 
 **Grafana**: [https://grafana.taraknathjana.com/goto/ff8eei84nfev4b?orgId=1](https://grafana.taraknathjana.com/goto/ff8eei84nfev4b?orgId=1)
+
+
 **Test Account**:{ email:tarakjana55@gmail.com , password: 1234 }
 
 ---
