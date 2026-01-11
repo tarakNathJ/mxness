@@ -12,6 +12,10 @@ interface user {
   id: string;
   ws: WebSocket;
 }
+const create_tread_topic = process.env.CREATE_TREAD_TOPIC;
+if (!create_tread_topic) {
+  throw new Error("create_tread_topic env not exist");
+}
 
 class kafka_instance {
   private kafka: Kafka | undefined;
@@ -19,6 +23,7 @@ class kafka_instance {
   private consumer: Consumer | undefined;
   private consumer2: Consumer | undefined;
   private kafka_topic: string | undefined;
+
   private kafka_group_id: string | undefined;
   private users: user[] = [];
 
@@ -45,13 +50,13 @@ class kafka_instance {
       get_consumer?.run({
         eachMessage: async ({ topic, partition, message }) => {
           /////////////////////////metrics/////////////////////////
-          metrics.kafka_messages_consumed.inc({topic:this.kafka_topic! })
-          
+          metrics.kafka_messages_consumed.inc({ topic: this.kafka_topic! });
+
           ////////////////////////////////////////////////////////
           const data = JSON.parse(message.value!.toString());
-          
+
           if (!data) return;
-          
+
           ////////////////////////////update price //////////////////
           set_curent_price(data.data.s, parseFloat(data.data.c));
           ///////////////////////////////end/////////////////////////
@@ -65,7 +70,6 @@ class kafka_instance {
         },
       });
     } catch (error: any) {
-     
       throw Error(error.message);
     }
   }
@@ -87,7 +91,6 @@ class kafka_instance {
 
       return this.consumer;
     } catch (error: any) {
-      
       throw error.message;
     }
   }
@@ -117,7 +120,6 @@ class kafka_instance {
 
       return this.consumer2;
     } catch (error: any) {
-      
       throw error.message;
     }
   }
@@ -130,14 +132,13 @@ class kafka_instance {
       );
       consumer?.run({
         eachMessage: async ({ topic, partition, message }) => {
-          /////////////////////////metrics//////////////// 
-          metrics.kafka_messages_consumed.inc({topic:topic})
+          /////////////////////////metrics////////////////
+          metrics.kafka_messages_consumed.inc({ topic: topic });
           ////////////////////////////////////////
           let data: any;
           const start = performance.now();
           try {
             data = JSON.parse(message.value!.toString()) || {};
-           
           } catch (error: any) {
             console.log("samthing want wrong", error.message);
             return;
@@ -147,13 +148,15 @@ class kafka_instance {
             const user_data = this.users.find(
               (us) => us.id === data.data.user_id
             );
-            
+
             user_data?.ws.send(JSON.stringify(data));
             ////////////////////////////metrics////////////////
-            metrics.trade_processing_duration.observe({ topic: "ws_send" }, (performance.now() - start)/1000);
+            metrics.trade_processing_duration.observe(
+              { topic: "ws_send" },
+              (performance.now() - start) / 1000
+            );
             ///////////////////////////////////////////////
           } catch (error: any) {
-            
             return;
           }
           consumer.commitOffsets([
@@ -178,7 +181,7 @@ class kafka_instance {
     this.WSS.on("connection", (ws) => {
       /////////////////////////metrics///////////////
       metrics.ws_connections.inc();
-      metrics.ws_active_connections.inc()
+      metrics.ws_active_connections.inc();
       ////////////////////////////metrics/////////////////////
       ws.on("message", async (message) => {
         let data;
@@ -207,15 +210,56 @@ class kafka_instance {
                 id: result?.u_id,
                 ws: ws,
               });
-              
+
               ws.send(
                 JSON.stringify({
                   type: "join_success",
                   message: "Joined successfully",
-                  
                 })
               );
               break;
+
+            case "Trade":
+              if (!data.payload) return;
+              const { symbol, quantity, type, take_profit, stop_loss, uId } =
+                data.payload;
+              if (
+                !symbol ||
+                !quantity ||
+                !type ||
+                !take_profit ||
+                !stop_loss ||
+                !uId
+              ) {
+                ws.send(
+                  JSON.stringify({
+                    type: "trade_mismatch",
+                  })
+                );
+              }
+              if (!create_tread_topic) {
+                throw new Error("create_tread_topic env not exist");
+              }
+
+              const producer = await this.get_producer();
+              producer.send({
+                topic: create_tread_topic,
+                messages: [
+                  {
+                    value: JSON.stringify({
+                      type: "trade",
+                      data: {
+                        user_unique_id: uId,
+                        symbol: symbol,
+                        quantity: quantity,
+                        type: type,
+                        take_profit: take_profit,
+                        stop_loss: stop_loss,
+                      },
+                    }),
+                  },
+                ],
+              });
 
             default:
               break;

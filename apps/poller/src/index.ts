@@ -22,7 +22,7 @@ class polling_binance_data {
 
   constructor() {
     this.init_web_socket();
-    this.start_metrics_push();
+    // this.start_metrics_push();
   }
 
   private init_web_socket() {
@@ -85,16 +85,16 @@ class polling_binance_data {
 
 
   // Push metrics to Prometheus PushGateway every 5 seconds
-  private start_metrics_push() {
-    setInterval(async () => {
-      try {
-        await metrics.pushMetrics("binance_polling");
+  // private start_metrics_push() {
+  //   setInterval(async () => {
+  //     try {
+  //       await metrics.pushMetrics("binance_polling");
       
-      } catch (err: any) {
-        throw err.message
-      }
-    }, 5000);
-  }
+  //     } catch (err: any) {
+  //       throw err.message
+  //     }
+  //   }, 5000);
+  // }
 
 
 }

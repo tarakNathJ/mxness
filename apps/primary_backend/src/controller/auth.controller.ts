@@ -24,17 +24,17 @@ const kafka = new kafka_instance(
   process.env.KAFKA_TOPICs!
 );
 
-export const curent_price: any = {};
+export const current_price: any = {};
 
 // set curent price
 export const set_curent_price = (symbol: string, price: number) => {
   try {
-    if (curent_price[symbol]) {
-      curent_price[symbol].price = price;
-      curent_price[symbol].timestamp = Date.now();
+    if (current_price[symbol]) {
+      current_price[symbol].price = price;
+      current_price[symbol].timestamp = Date.now();
       return true;
     } else {
-      curent_price[symbol] = {
+      current_price[symbol] = {
         price: price,
         timestamp: Date.now(),
       };
@@ -51,11 +51,11 @@ function get_price_data_for_symbol(
   quantity: number,
   existing_balance: number
 ) {
-  if (!curent_price[symbol]) {
+  if (!current_price[symbol]) {
     throw new Error(`Symbol ${symbol} not found`);
   }
 
-  const price = quantity * curent_price[symbol].price;
+  const price = quantity * current_price[symbol].price;
   if (price > existing_balance) {
     return {
       price: price,
@@ -148,6 +148,10 @@ export const login_user = async_handler(async (req, res) => {
   if (!user_data) {
     throw new api_error(400, "user not found");
   }
+  const [user_unique_id_details] = await db
+    .select()
+    .from(user_unique_id)
+    .where(eq(user_unique_id.user_id, user_data.id));
 
   const is_password_match = bcrypt.compareSync(password, user_data.password);
 
@@ -164,6 +168,7 @@ export const login_user = async_handler(async (req, res) => {
 
   return new api_responce(200, "login successfully", {
     token,
+    uId: user_unique_id_details?.unique_id,
     email: user_data.email,
     name: user_data.name,
   }).send(res);
@@ -488,103 +493,6 @@ export const get_user_all_tread = async_handler(async (req, res) => {
   return new api_responce(200, "user treads", user_treads).send(res);
 });
 
-export const take_profit_and_stop_loss = async_handler(async (req, res) => {
-  const { symbol, quantity, type, take_profit, stop_loss } = req.body;
-  // @ts-ignore
-
-  // chack all data
-  // chack user balance are exist or not
-  // get current price
-  // create new tread
-  // return responce
-
-  const user_id = req.user.id;
-
-  if (!symbol || !user_id || !quantity || !type || !take_profit || !stop_loss) {
-    throw new api_error(400, "please fill all the fields");
-  }
-
-  const [chack_balance_are_exist] = await db
-    .select()
-    .from(account_balance)
-    .where(
-      and(
-        eq(account_balance.user_id, user_id),
-        eq(account_balance.symbol, "USD")
-      )
-    );
-
-  if (!chack_balance_are_exist) {
-    throw new api_error(400, "balance not found");
-  }
-
-  const { price, status } = get_price_data_for_symbol(
-    symbol,
-    quantity,
-    chack_balance_are_exist.balance
-  );
-
-  if (!status) {
-    throw new api_error(400, "insufficient balance");
-  }
-
-  const result = await db.transaction(async (tx) => {
-    const [create_new_trea] = await tx
-      .insert(options_tread)
-      .values({
-        symbol: symbol,
-        user_id: user_id,
-        quantity: quantity,
-        tread_type: type,
-        take_profit: take_profit,
-        stop_loss: stop_loss,
-        open_price: price,
-      })
-      .returning({
-        symbol: tread.symbol,
-        user_id: tread.user_id,
-        quantity: tread.quantity,
-        tread_type: tread.tread_type,
-        id: tread.id,
-      });
-
-    const [get_unique_id] = await tx
-      .select()
-      .from(user_unique_id)
-      .where(eq(user_unique_id.user_id, user_id));
-
-    if (!create_new_trea || !get_unique_id)
-      throw new api_error(400, "database insert failed");
-
-    const producer = await kafka.get_producer();
-    producer.send({
-      topic: process.env.KAFKA_TOPICs!,
-      messages: [
-        {
-          value: JSON.stringify({
-            type: "new_trade",
-            data: {
-              id: create_new_trea.id,
-              user_unique_id: get_unique_id.unique_id,
-              symbol: symbol,
-              quantity: quantity,
-              price: price,
-              type: type,
-              take_profit: take_profit,
-              stop_loss: stop_loss,
-            },
-          }),
-        },
-      ],
-    });
-
-    return create_new_trea;
-  });
-
-  return new api_responce(201, "success fully create new tread", result).send(
-    res
-  );
-});
 
 export const cancel_tread_for_take_profit_and_stop_loss = async_handler(
   async (req, res) => {

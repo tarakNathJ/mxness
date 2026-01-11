@@ -1,0 +1,23 @@
+{
+  "name": "execution_engine",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon --exec \"npm run start\" --ext ts --watch src",
+    "start": "tsc && node dist/index.js",
+    "build": "tsc"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "dotenv": "^16.0.3",
+    "kafkajs": "^2.2.4",
+    "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "@types/kafkajs": "^1.8.2"
+  }
+}

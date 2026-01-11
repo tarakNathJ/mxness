@@ -24,7 +24,7 @@ class order_book {
       }
     }
   }
-  cancel_trade(id: number, side: string ,quantity:number) {
+  cancel_trade(id: any, side: string ,quantity:number) {
     const order_book = side === "long" ? this.buy : this.sell;
 
     for (const [price, orders] of order_book) {
