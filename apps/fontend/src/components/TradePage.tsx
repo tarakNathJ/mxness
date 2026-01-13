@@ -145,6 +145,7 @@ interface TradeLogProps {
   selectedPair: string;
 }
 
+
 function TradeLog({ activity, selectedPair }: TradeLogProps) {
   const userInfoRaw = sessionStorage.getItem("user_info");
   let simpal_trades = userInfoRaw
@@ -214,11 +215,9 @@ function TradeLog({ activity, selectedPair }: TradeLogProps) {
     remove_Tread_Data(tradeId);
   };
 
-
-
   // Reverse the array to show most recent trades first
   // const recentTrades = activity.slice().reverse();
-
+  const cancel_tread = async (id: number) => {
     try {
       const responce = await api_init.post("/api/cancel_tread", { id: id });
       if (responce.data.success) {
@@ -231,7 +230,7 @@ function TradeLog({ activity, selectedPair }: TradeLogProps) {
       console.log(error.message);
       toast(`${error.message || "failed cancel operation"}`);
     }
-  
+  };
 
   return (
     <div className="space-y-4">
@@ -264,26 +263,13 @@ function TradeLog({ activity, selectedPair }: TradeLogProps) {
               <span className="font-semibold text-gray-300">Trade ID:</span>{" "}
               <span className="text-gray-200">{t.id}</span>
             </p>
-            {t.message === "take profit hit" && (
-  <p>
-    <span className="font-semibold text-gray-300">Status:</span>{" "}
-    <span className="text-green-400">Take-profit achieved</span>
-  </p>
-)}
 
-{t.message === "trade hold" && (
-  <p>
-    <span className="font-semibold text-gray-300">Status:</span>{" "}
-    <span className="text-yellow-400">Position active</span>
-  </p>
-)}
-
-{t.message === "stop loss hit" && (
-  <p>
-    <span className="font-semibold text-gray-300">Status:</span>{" "}
-    <span className="text-red-400">Stop-loss triggered</span>
-  </p>
-)}
+            {t.message && (
+              <p>
+                <span className="font-semibold text-gray-300">Status:</span>{" "}
+                <span className="text-yellow-400">{t.message}</span>
+              </p>
+            )}
 
             {/* Cancel button */}
             <button
@@ -338,6 +324,10 @@ function TradeLog({ activity, selectedPair }: TradeLogProps) {
     </div>
   );
 }
+
+
+
+
 
 interface TradeData {
   id: number; // trade ID from backend
