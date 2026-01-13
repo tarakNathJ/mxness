@@ -218,24 +218,7 @@ function TradeLog({ activity, selectedPair }: TradeLogProps) {
 
   // Reverse the array to show most recent trades first
   // const recentTrades = activity.slice().reverse();
-  const cancel_tread = async (id: number) => {
-      const statusConfig: Record<
-  string,
-  { label: string; color: string }
-> = {
-  TAKE_PROFIT_HIT: {
-    label: "Take profit hit",
-    color: "text-green-400",
-  },
-  STOP_LOSS_HIT: {
-    label: "Stop loss hit",
-    color: "text-red-400",
-  },
-  TRADE_HOLD: {
-    label: "Position held",
-    color: "text-yellow-400",
-  },
-};
+
     try {
       const responce = await api_init.post("/api/cancel_tread", { id: id });
       if (responce.data.success) {
@@ -281,12 +264,24 @@ function TradeLog({ activity, selectedPair }: TradeLogProps) {
               <span className="font-semibold text-gray-300">Trade ID:</span>{" "}
               <span className="text-gray-200">{t.id}</span>
             </p>
-           {t.message && statusConfig[t.message] && (
+            {t.message === "take profit hit" && (
   <p>
     <span className="font-semibold text-gray-300">Status:</span>{" "}
-    <span className={statusConfig[t.message].color}>
-      {statusConfig[t.message].label}
-    </span>
+    <span className="text-green-400">Take-profit achieved</span>
+  </p>
+)}
+
+{t.message === "trade hold" && (
+  <p>
+    <span className="font-semibold text-gray-300">Status:</span>{" "}
+    <span className="text-yellow-400">Position active</span>
+  </p>
+)}
+
+{t.message === "stop loss hit" && (
+  <p>
+    <span className="font-semibold text-gray-300">Status:</span>{" "}
+    <span className="text-red-400">Stop-loss triggered</span>
   </p>
 )}
 
