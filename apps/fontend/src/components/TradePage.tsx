@@ -281,15 +281,14 @@ function TradeLog({ activity, selectedPair }: TradeLogProps) {
               <span className="font-semibold text-gray-300">Trade ID:</span>{" "}
               <span className="text-gray-200">{t.id}</span>
             </p>
-            {t.message && statusConfig[t.message] && (
-             <span
-                className={`inline-block mt-2 px-2 py-1 text-xs rounded-full border ${
-                  statusConfig[t.message].color
-                      } border-gray-600`}
-                      >
-                      {statusConfig[t.message].label}
-                      </span>
-                    )}
+           {t.message && statusConfig[t.message] && (
+  <p>
+    <span className="font-semibold text-gray-300">Status:</span>{" "}
+    <span className={statusConfig[t.message].color}>
+      {statusConfig[t.message].label}
+    </span>
+  </p>
+)}
 
             {/* Cancel button */}
             <button
