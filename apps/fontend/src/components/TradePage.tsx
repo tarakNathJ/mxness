@@ -266,6 +266,7 @@ function TradeLog({ activity, selectedPair }: TradeLogProps) {
 
             {t.message && (
               <p>
+                <span className="font-semibold text-gray-300">Status:</span>{" "}
             {t.message === "take profit hit" && (
             <span className="text-green-400">Take-profit achieved</span>
             )}
