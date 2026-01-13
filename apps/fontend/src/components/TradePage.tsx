@@ -231,7 +231,7 @@ function TradeLog({ activity, selectedPair }: TradeLogProps) {
       console.log(error.message);
       toast(`${error.message || "failed cancel operation"}`);
     }
-  };
+  
 
   return (
     <div className="space-y-4">
