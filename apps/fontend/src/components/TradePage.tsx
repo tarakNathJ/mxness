@@ -214,7 +214,12 @@ function TradeLog({ activity, selectedPair }: TradeLogProps) {
     remove_Tread_Data(tradeId);
   };
 
-  const statusConfig: Record<
+
+
+  // Reverse the array to show most recent trades first
+  // const recentTrades = activity.slice().reverse();
+  const cancel_tread = async (id: number) => {
+      const statusConfig: Record<
   string,
   { label: string; color: string }
 > = {
@@ -231,10 +236,6 @@ function TradeLog({ activity, selectedPair }: TradeLogProps) {
     color: "text-yellow-400",
   },
 };
-
-  // Reverse the array to show most recent trades first
-  // const recentTrades = activity.slice().reverse();
-  const cancel_tread = async (id: number) => {
     try {
       const responce = await api_init.post("/api/cancel_tread", { id: id });
       if (responce.data.success) {
@@ -280,15 +281,15 @@ function TradeLog({ activity, selectedPair }: TradeLogProps) {
               <span className="font-semibold text-gray-300">Trade ID:</span>{" "}
               <span className="text-gray-200">{t.id}</span>
             </p>
-
-{t.message && statusConfig[t.message] && (
-  <p>
-    <span className="font-semibold text-gray-300">Status:</span>{" "}
-    <span className={statusConfig[t.message].color}>
-      {statusConfig[t.message].label}
-    </span>
-  </p>
-)}
+            {t.message && statusConfig[t.message] && (
+             <span
+                className={`inline-block mt-2 px-2 py-1 text-xs rounded-full border ${
+                  statusConfig[t.message].color
+                      } border-gray-600`}
+                      >
+                      {statusConfig[t.message].label}
+                      </span>
+                    )}
 
             {/* Cancel button */}
             <button
