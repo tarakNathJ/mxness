@@ -214,6 +214,24 @@ function TradeLog({ activity, selectedPair }: TradeLogProps) {
     remove_Tread_Data(tradeId);
   };
 
+  const statusConfig: Record<
+  string,
+  { label: string; color: string }
+> = {
+  TAKE_PROFIT_HIT: {
+    label: "Take profit hit",
+    color: "text-green-400",
+  },
+  STOP_LOSS_HIT: {
+    label: "Stop loss hit",
+    color: "text-red-400",
+  },
+  TRADE_HOLD: {
+    label: "Position held",
+    color: "text-yellow-400",
+  },
+};
+
   // Reverse the array to show most recent trades first
   // const recentTrades = activity.slice().reverse();
   const cancel_tread = async (id: number) => {
@@ -263,12 +281,14 @@ function TradeLog({ activity, selectedPair }: TradeLogProps) {
               <span className="text-gray-200">{t.id}</span>
             </p>
 
-            {t.message && (
-              <p>
-                <span className="font-semibold text-gray-300">Status:</span>{" "}
-                <span className="text-yellow-400">{t.message}</span>
-              </p>
-            )}
+{t.message && statusConfig[t.message] && (
+  <p>
+    <span className="font-semibold text-gray-300">Status:</span>{" "}
+    <span className={statusConfig[t.message].color}>
+      {statusConfig[t.message].label}
+    </span>
+  </p>
+)}
 
             {/* Cancel button */}
             <button
@@ -388,7 +408,7 @@ function TradePage() {
   useEffect(() => {
     if (currentTickerPrice > 0 && orderType === "bracket") {
       // Example: TP/SL 0.5% away (A reasonable starting point for BTC/ETH)
-      const deviation = currentTickerPrice * 0.005;
+      const deviation = currentTickerPrice;
 
       let newTP: number, newSL: number;
 
