@@ -3,11 +3,6 @@
 
 A full-stack trading platform clone inspired by Exness, built with modern technologies in a Turborepo monorepo structure.
 
-## 🌐 Live Demo
-
-
-**Test Account**:{ email:tarakjana55@gmail.com , password: 1234 }
-
 ---
 
 ## 📋 Table of Contents
