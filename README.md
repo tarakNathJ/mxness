@@ -5,11 +5,6 @@ A full-stack trading platform clone inspired by Exness, built with modern techno
 
 ## 🌐 Live Demo
 
-**Frontend**: [https://exness-clone-fontend.vercel.app/](https://exness-clone-fontend.vercel.app/)
-
-
-**Grafana**: [https://grafana.taraknathjana.com/goto/ff8eei84nfev4b?orgId=1](https://grafana.taraknathjana.com/goto/ff8eei84nfev4b?orgId=1)
-
 
 **Test Account**:{ email:tarakjana55@gmail.com , password: 1234 }
 
