@@ -1,9 +1,5 @@
 # 📈 Exness Clone - Trading Platform
 
-[![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen)](https://exness-clone-fontend.vercel.app/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-97.9%25-blue)](https://www.typescriptlang.org/)
-[![React](https://img.shields.io/badge/React-19.2.0-61DAFB?logo=react)](https://reactjs.org/)
-[![Vite](https://img.shields.io/badge/Vite-7.2.4-646CFF?logo=vite)](https://vitejs.dev/)
 
 A full-stack trading platform clone inspired by Exness, built with modern technologies in a Turborepo monorepo structure.
 
